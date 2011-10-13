@@ -6,6 +6,8 @@ var yMax         = 50;
 var xMax         = 50;
 var cellsToShow  = 0;
 
+var clickSound = document.getElementById('click');
+
 function pop(x, y)
 {
     if (stackPointer > 0) {
@@ -60,6 +62,8 @@ function explode(x,y)
     showAll();
     grid[y][x].cell.style.cssText += 'background-color:rgb(255,255,0)';
     setMessage("You lose!");
+    var explodeSound = document.getElementById("explode");
+    explodeSound.play();
 }
 
 
@@ -85,6 +89,8 @@ function floodFill(x, y)
 	if (!cellsToShow) {
 	    setMessage("You WIN!");
 	    showAll();
+	    var successSound = document.getElementById("success");
+	    successSound.play();
 	}
     	return;
     }
@@ -228,6 +234,8 @@ function show(x,y)
         cell.style.cssText += "background-color:rgb(255,"+gb+","+gb+")";
 	--cellsToShow;
     }
+
+    clickSound.play();
 }
 
 
