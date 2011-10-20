@@ -1,0 +1,23 @@
+table {
+    background-color: black;
+    border:3px solid black;
+    position: relative;
+    top: 50px;
+}
+
+button {
+    border:3px solid #000;
+    position: relative;
+    top: 70px;
+}
+
+#message {
+    background-color: white;
+    width: 150px;
+    position: relative;
+    top: 90px;
+}    
+
+body {
+    background-color: #303030;
+}
