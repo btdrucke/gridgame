@@ -10,14 +10,6 @@ body {
     background-repeat: no-repeat;
 }
 
-#grid {
-    background-color: black;
-    border: 3px solid black;
-    position: relative;
-    top: 50px;
-    display: table;
-}
-
 button {
     border: 3px solid black;
     position: relative;
@@ -30,6 +22,14 @@ button {
     position: relative;
     top: 90px;
 }    
+
+#grid {
+    background-color: black;
+    border: 3px solid black;
+    position: relative;
+    top: 50px;
+    display: table;
+}
 
 .row {
     display: table-row;

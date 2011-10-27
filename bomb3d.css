@@ -1,0 +1,91 @@
+body {
+    background-color: black;
+    font-family: 'Lucida Grande', Verdana, Arial;
+    font-size: 12px;
+    background-image: -webkit-gradient(radial,
+				       center center, 1,
+				       center center, 400,
+				       from(rgba(255, 255, 255, 0.3)),
+				       to(rgba(255, 255, 255, 0)));
+    background-repeat: no-repeat;
+}
+
+button {
+    border: 3px solid black;
+    position: relative;
+    top: 70px;
+}
+
+#message {
+    background-color: white;
+    width: 150px;
+    position: relative;
+    top: 90px;
+}    
+
+#container {
+    -webkit-perspective: 800; /* For compatibility with iPhone 3.0, we leave off the units here */
+    -webkit-perspective-origin: 50% 50%;
+    width: 100%;
+    height: 600px;
+}
+
+#stage {
+    position: relative;
+    top: -160px;
+    width: 100%;
+    height: 100%;
+    -webkit-transition: -webkit-transform 2s;
+    -webkit-transform-style: preserve-3d;
+    display: -webkit-box;
+    -webkit-box-align: center;
+    -webkit-box-pack: center;
+    -webkit-user-select: none;
+}
+
+#grid {
+    -webkit-transform-style: preserve-3d;
+    -webkit-animation-duration: 0.5s;
+    -webkit-iteration-count: 1;
+    -webkit-iteration-direction: normal;
+    -webkit-animation-timing-function: ease-in-out;
+    -webkit-animation-fill-mode: forwards;
+}
+
+.plane {
+    position: absolute;
+    border: 1px solid black;
+    text-align: center;
+    font-family: Times, serif;
+    font-size: 24pt;
+    color: black;
+    background-color: rgba(255, 255, 255, 0.6);
+    -webkit-transition: -webkit-transform 2s, opacity 2s;
+    -webkit-backface-visibility: hidden;  // visible;
+}
+
+.cell {
+    padding: 0px;
+    text-align: center;
+    border: 1px solid;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.hiddenEven {
+    background-color: #b0b0b0;
+}
+
+.hiddenOdd {
+    background-color: #a0a0a0;
+}
+
+.exploded {
+    background-color: yellow;
+}
+
+.hasBomb {
+    background-image: url('bomb.png');
+    background-position: center;
+    background-repeat: no-repeat;
+}
