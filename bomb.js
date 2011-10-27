@@ -1,12 +1,33 @@
-var grid    = [];
-var stackSize    = 5000;
-var stack        = new Array(stackSize);
+var grid = [];
+var stackSize = 5000;
+var stack = new Array(stackSize);
 var stackPointer = 0;
-var yMax         = 50;
-var xMax         = 50;
-var cellsToShow  = 0;
+var yMax = 50;
+var xMax = 50;
+var cellsToShow, bombsToCreate;
 
 var clickSound = document.getElementById('click');
+
+function hasClassName(inElement, inClassName)
+{
+    var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)');
+    return regExp.test(inElement.className);
+}
+
+function addClassName(inElement, inClassName)
+{
+    if (!hasClassName(inElement, inClassName))
+        inElement.className = [inElement.className, inClassName].join(' ');
+}
+
+function removeClassName(inElement, inClassName)
+{
+    if (hasClassName(inElement, inClassName)) {
+        var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)', 'g');
+        var curClasses = inElement.className;
+        inElement.className = curClasses.replace(regExp, ' ');
+    }
+}
 
 function pop(x, y)
 {
@@ -60,7 +81,7 @@ function explode(x,y)
 {
     console.log("explode",x,y);
     showAll();
-    grid[y][x].cell.style.cssText += 'background-color:rgb(255,255,0)';
+    addClassName(grid[y][x].cell, "exploded");
     setMessage("You lose!");
     var explodeSound = document.getElementById("explode");
     explodeSound.play();
@@ -71,6 +92,9 @@ function doFloodFill(x,y)
 {
     if (!cellsToShow) return;
 
+    if (bombsToCreate) {
+	placeBombs(x,y);
+    }
     if (hasBomb(x,y)) {
         explode(x,y);
     }
@@ -189,7 +213,6 @@ function placeBomb(x, y)
         if (yInRange(y-1)) grid[y-1][x].count++;
         if (yInRange(y  )) {
             grid[y  ][x].count = 9;
-            //grid[y][x].cell.style.cssText += "background-image:url('bomb.png');background-position:center;background-repeat:no-repeat;border:1px solid";
         }
         if (yInRange(y+1)) grid[y+1][x].count++;
     }
@@ -197,6 +220,25 @@ function placeBomb(x, y)
         if (yInRange(y-1)) grid[y-1][x+1].count++;
         if (yInRange(y  )) grid[y  ][x+1].count++;
         if (yInRange(y+1)) grid[y+1][x+1].count++;
+    }
+}
+
+
+function placeBombs(xNone, yNone) 
+{
+    while (bombsToCreate) {
+        var xBomb = Math.floor(Math.random()*xMax);
+        var yBomb = Math.floor(Math.random()*yMax);
+	if ((xBomb == xNone) && (yBomb == yNone)) {
+	    continue;
+	}
+        if (hasBomb(xBomb, yBomb)) {
+            continue;
+        }
+        else {
+            placeBomb(xBomb, yBomb);
+            --bombsToCreate;
+        }
     }
 }
 
@@ -222,7 +264,7 @@ function show(x,y)
 
     var cell = grid[y][x].cell;
     if (hasBomb(x,y)) {
-        cell.style.cssText += "background-image:url('bomb.png');background-position:center;background-repeat:no-repeat;border:1px solid";
+	addClassName(cell.style, "hasBomb");
     }
     else {
         var count = grid[y][x].count;
@@ -231,7 +273,7 @@ function show(x,y)
             cell.innerHTML = count;
         }
         var gb = Math.round(255 * (8-count)/8);
-        cell.style.cssText += "background-color:rgb(255,"+gb+","+gb+")";
+        cell.style.backgroundColor = "rgb(255,"+gb+","+gb+")";
 	--cellsToShow;
     }
 
@@ -245,41 +287,31 @@ function loadFloodFill(w, h, totalBombs, blockSize)
 
     xMax = w;
     yMax = h;
-    var tbl = document.getElementById('cells');
+    var tbl = document.getElementById("grid");
     for (var i = tbl.childNodes.length-1; i>=0; --i) {
         tbl.removeChild(tbl.childNodes[i]);
     }
 
-    for (var row=0; row<yMax; ++row) {
-        grid[row] = [];
-        var tr  = document.createElement('TR');
-        tr.style.cssText = 'background-color:#ffffff';
-        for (var col=0; col<xMax; ++col) {
-            var td     = document.createElement('TD');
-            grid[row][col] = {cell:td, count:0, shown:false};
-
-            td.style.cssText = 'width:'+blockSize+'px;height:'+blockSize+'px;text-align:center;border:1px solid;background-color:#b0b0b0';
-            td.id            = 'cell'+col+'_'+row;
-            td.onclick       = new Function('doFloodFill('+col+', '+row+');');
-            tr.appendChild(td);
+    for (var y = 0; y < yMax; ++y) {
+        grid[y] = [];
+        var row = document.createElement("div");
+	row.className = "row";
+        row.style.backgroundColor = "white";
+        for (var x = 0; x < xMax; ++x) {
+            var cell = document.createElement("div");
+            grid[y][x] = {"cell": cell, "count": 0, "shown": false};
+	    cell.className    = "cell hidden";
+            cell.style.width  = blockSize+'px';
+	    cell.style.height = blockSize+'px';
+            cell.id           = 'cell'+x+'_'+y;
+            cell.onclick      = new Function('doFloodFill('+x+', '+y+');');
+            row.appendChild(cell);
         }
-        tbl.appendChild(tr);
+        tbl.appendChild(row);
     }
 
-    var bombsToCreate = Math.max(Math.min(totalBombs, Math.ceil(yMax*xMax*0.25)), 1);
+    bombsToCreate = Math.max(Math.min(totalBombs, Math.ceil(yMax*xMax*0.25)), 1);
     cellsToShow = w*h-bombsToCreate;
-
-    while (bombsToCreate) {
-        var xBomb = Math.floor(Math.random()*xMax);
-        var yBomb = Math.floor(Math.random()*yMax);
-        if (hasBomb(xBomb, yBomb)) {
-            continue;
-        }
-        else {
-            placeBomb(xBomb, yBomb);
-            --bombsToCreate;
-        }
-    }
 }
 
 function doHint()
@@ -302,6 +334,10 @@ function doHint()
     floodFill(xHint, yHint);
 }
 
-window.loadFloodFill = loadFloodFill;
-window.doFloodFill   = doFloodFill;
-
+window.onload = function() {
+    document.getElementById("reset").addEventListener("click", function(event) {
+	loadFloodFill(10,10,12,50);
+    });
+    document.getElementById("hint").addEventListener("click", doHint);
+    loadFloodFill(10,10,12,50);
+};

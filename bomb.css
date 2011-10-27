@@ -1,12 +1,17 @@
-table {
+body {
+    background-color: #303030;
+}
+
+#grid {
     background-color: black;
-    border:3px solid black;
+    border: 3px solid black;
     position: relative;
     top: 50px;
+    display: table;
 }
 
 button {
-    border:3px solid #000;
+    border: 3px solid black;
     position: relative;
     top: 70px;
 }
@@ -18,6 +23,28 @@ button {
     top: 90px;
 }    
 
-body {
-    background-color: #303030;
+.row {
+    display: table-row;
+}
+
+.cell {
+    padding: 0px;
+    text-align: center;
+    border: 1px solid;
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.hidden {
+    background-color: #b0b0b0;
+}
+
+.exploded {
+    background-color: yellow;
+}
+
+.hasBomb {
+    background-image: url('bomb.png');
+    background-position: center;
+    background-repeat: no-repeat;
 }

@@ -5,25 +5,19 @@
     <link rel="stylesheet" type="text/css" href="bomb.css"> </link>
   </head> 
  
-  <body onload="loadFloodFill(10,10,12,50)">
+  <body id="container">
     <center>
 
     <audio id="explode" preload="auto" src="bomb.ogg" type="audio/mp3"></audio>
     <audio id="click" preload="auto" src="click.ogg" type="audio/ogg"></audio>
     <audio id="success" preload="auto" src="success.ogg" type="audio/ogg"></audio>
 
-    <table cellspacing="0" cellpadding="0"> 
-      <tbody id="cells"></tbody> 
-    </table> 
-    <script language="Javascript" src="bomb.js" type="text/javascript"></script> 
-    <button onclick="loadFloodFill(10,10,12,50)">
-      Reset board
-    </button>
-    <button onclick="doHint()">
-      Give me a hint
-    </button>
+    <div id="grid"></div> 
+    <button id="reset">Reset board</button>
+    <button id="hint">Give me a hint</button>
     <div id="message"></div>
 
     <center>
+    <script language="Javascript" src="bomb.js" type="text/javascript"></script> 
   </body> 
 </html> 
