@@ -27,9 +27,7 @@ function spinTo(x)
     else {
 	xPos = -x;
     }
-    console.log("before: "+gridElem.style.webkitTransform);
     gridElem.style.webkitTransform = "rotateY("+xPos*360/xMax+"deg)";
-    console.log("before: "+gridElem.style.webkitTransform);
 }
 
 function handleKeyDown(event) 
@@ -124,7 +122,7 @@ function showAll()
 function setMessage(msg)
 {
     var msgElem = document.getElementById('message');
-    msgElem.innerHTML = msg;
+    msgElem.innerText = msg;
 }
 
 function explode(x,y)
@@ -355,13 +353,14 @@ function show(x,y)
 
     var cell = grid[y][x].cell;
     if (hasBomb(x,y)) {
-	addClassName(cell.style, "hasBomb");
+	addClassName(cell, "hasBomb");
+	cell.style.backgroundSize = cellHeight+"px "+cellHeight+"px";
     }
     else {
         var count = grid[y][x].count;
         //console.log("no bomb", count);
         if (count > 0) {
-            cell.innerHTML = count;
+            cell.innerText = count;
         }
         var gb = Math.round(255 * (8-count)/8);
         cell.style.backgroundColor = "rgb(255,"+gb+","+gb+")";
@@ -379,7 +378,9 @@ function createGrid3d(cellHeight)
     var radius = circum/(2*Math.PI);
     var cellRot = 360/xMax;
 
-    // TODO: Clear out existing grid, if any
+    for (var i = gridElem.childNodes.length-1; i>=0; --i) {
+        gridElem.removeChild(gridElem.childNodes[i]);
+    }
 
     for (var y = 0; y < yMax; ++y) {
         grid[y] = [];
@@ -404,9 +405,8 @@ function createGrid3d(cellHeight)
 
 function createGrid(cellHeight)
 {
-    var tbl = document.getElementById("grid");
-    for (var i = tbl.childNodes.length-1; i>=0; --i) {
-        tbl.removeChild(tbl.childNodes[i]);
+    for (var i = gridElem.childNodes.length-1; i>=0; --i) {
+        gridElem.removeChild(gridElem.childNodes[i]);
     }
 
     for (var y = 0; y < yMax; ++y) {
@@ -423,7 +423,7 @@ function createGrid(cellHeight)
             cell.onclick      = new Function('doFloodFill('+x+', '+y+');');
             row.appendChild(cell);
         }
-        tbl.appendChild(row);
+        gridElem.appendChild(row);
     }
 }
 
@@ -469,8 +469,7 @@ function doHint()
     }
     setMessage("Hint: ("+xHint+"x"+yHint+")");
     floodFill(xHint, yHint);
-    //grid[yHint][xHint].cell.style.webkitAnimationName = "pulse";
-    grid[yHint][xHint].cell.style.backgroundColor = "lightblue";
+    grid[yHint][xHint].cell.style.webkitAnimationName = "hintPulse";
 }
 
 
