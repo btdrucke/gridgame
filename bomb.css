@@ -1,5 +1,13 @@
 body {
-    background-color: #303030;
+    background-color: black;
+    font-family: 'Lucida Grande', Verdana, Arial;
+    font-size: 12px;
+    background-image: -webkit-gradient(radial,
+				       center center, 1,
+				       center center, 400,
+				       from(rgba(255, 255, 255, 0.3)),
+				       to(rgba(255, 255, 255, 0)));
+    background-repeat: no-repeat;
 }
 
 #grid {
