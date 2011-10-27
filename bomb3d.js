@@ -12,16 +12,24 @@ function getKeyCode(event)
     return keycode;    
 }
 
-function spinLeft() 
+function spin(by) 
 {
-    gridElem.style.webkitAnimationName = "spin-left-"+Math.round(xPos*360/xMax);
-    xPos = (xPos-1+xMax)%xMax;
+    by = Math.round(by||1);
+    xPos += by;
+    gridElem.style.webkitTransform = "rotateY("+xPos*360/xMax+"deg)";
 }
 
-function spinRight()
+function spinTo(x)
 {
-    gridElem.style.webkitAnimationName = "spin-right-"+Math.round(xPos*360/xMax);
-    xPos = (xPos+1)%xMax;
+    if (x - xPos > xMax/2) {
+	xPos = -x + xMax;
+    }
+    else {
+	xPos = -x;
+    }
+    console.log("before: "+gridElem.style.webkitTransform);
+    gridElem.style.webkitTransform = "rotateY("+xPos*360/xMax+"deg)";
+    console.log("before: "+gridElem.style.webkitTransform);
 }
 
 function handleKeyDown(event) 
@@ -30,16 +38,10 @@ function handleKeyDown(event)
     
     switch (code) {
     case 37: //left
-	if (!spinning) {
-	    spinLeft();
-	}
-	else {
-	    pendingSpin = "left";
-	}
+	spin(-1);
 	break;
     case 39: //right
-	if (!spinning) spinRight();
-	else pendingSpin = "right";
+	spin(1);
 	break;
     }
     return false;
@@ -47,20 +49,12 @@ function handleKeyDown(event)
 
 function animationStart(event) 
 {
-    spinning = true;
     console.log("animation start");
 }
 
 function animationEnd(event) 
 {
-    spinning = false;
-    if (pendingSpin == "left") {
-	spinLeft();
-    }
-    else if (pendingSpin == "right") {
-	spinRight();
-    }
-    pendingSpin = "";
+    console.log("animation end");
 }
 
 
@@ -139,6 +133,7 @@ function explode(x,y)
     showAll();
     addClassName(grid[y][x].cell, "exploded");
     setMessage("You lose!");
+    spinTo(x);
     var explodeSound = document.getElementById("explode");
     explodeSound.play();
 }
@@ -191,6 +186,8 @@ function floodFill(x, y)
     console.log("floodFill",x,y);
     if (isShown(x,y)) return;
 
+    spinTo(x);
+    
     if (grid[y][x].count > 0) {
     	show(x,y);
 	if (!cellsToShow) {
@@ -384,8 +381,6 @@ function createGrid3d(cellHeight)
 
     // TODO: Clear out existing grid, if any
 
-    var styleElem = document.documentElement.appendChild(document.createElement("style"));
-
     for (var y = 0; y < yMax; ++y) {
         grid[y] = [];
 	for (var x = 0; x < xMax; ++x) {
@@ -394,6 +389,7 @@ function createGrid3d(cellHeight)
             grid[y][x] = {"cell": cell, "count": 0, "shown": false};
 	    addClassName(cell, "plane");
 	    addClassName(cell, (x+y)%2 ? "hiddenEven" : "hiddenOdd");
+	    //cell.innerText = x;
 	    cell.style.height = ""+cellHeight+"px";
 	    cell.style.width = ""+cellWidth+"px";
 	    cell.style.webkitTransform = "rotateY(" +xRot+ "deg) \
@@ -402,20 +398,6 @@ function createGrid3d(cellHeight)
             cell.onclick = new Function('doFloodFill('+x+', '+y+');');
 	    gridElem.appendChild(cell);
 	}
-    }
-
-    for (var x = 0; x < xMax; ++x) {
-	var xRot = Math.round(x*cellRot);
-
-	var rule1 = "@-webkit-keyframes spin-right-"+xRot+" {\
-                         0%   {-webkit-transform: rotateY("+xRot+"deg);}\
-                         100% {-webkit-transform: rotateY("+Math.round((x+1)*cellRot)+"deg);}}";
-	styleElem.sheet.insertRule(rule1, 0);
-	
-	var rule2 = "@-webkit-keyframes spin-left-"+xRot+" {\
-                         0%   {-webkit-transform: rotateY("+xRot+"deg);}\
-                         100% {-webkit-transform: rotateY("+Math.round((x-1)*cellRot)+"deg);}}";
-	styleElem.sheet.insertRule(rule2, 0);
     }
 }
 
@@ -487,6 +469,96 @@ function doHint()
     }
     setMessage("Hint: ("+xHint+"x"+yHint+")");
     floodFill(xHint, yHint);
+    //grid[yHint][xHint].cell.style.webkitAnimationName = "pulse";
+    grid[yHint][xHint].cell.style.backgroundColor = "lightblue";
+}
+
+
+function clickCoordsWithinElement(event) {
+    var coords = {x: 0, y: 0};
+    if (!event) {
+        event = window.event;
+        coords.x = event.x;
+        coords.y = event.y;
+    } else {
+        var element = event.target ;
+        var totalOffsetLeft = 0;
+        var totalOffsetTop = 0 ;
+
+        while (element.offsetParent)
+        {
+            totalOffsetLeft += element.offsetLeft;
+            totalOffsetTop += element.offsetTop;
+            element = element.offsetParent;
+        }
+        coords.x = event.pageX - totalOffsetLeft;
+        coords.y = event.pageY - totalOffsetTop;
+    }
+    return coords;
+}
+
+function mouseDown(event) 
+{
+    if (!pressed) {
+	var coords = clickCoordsWithinElement(event);
+	firstXPos = xPos;
+	firstX = lastX = coords.x;
+	lastY = coords.y
+	pressed = true;
+	dragging = false;
+    }
+}
+
+
+function mouseUp(event) 
+{
+    if (pressed) {
+        pressed = false;
+	if (dragging) {
+	    if (Math.abs(lastXDelta) > 2) {
+		var a = (lastXDelta<0)?-1:1;
+		var b = Math.abs(lastXDelta)/6;
+		var c = Math.min(xMax/2, b)
+		var spinBy = c * a;
+		console.log("flick:" + lastXDelta+ ", spinBy:"+spinBy);
+		spin(spinBy);
+	    }
+	    dragging = false;
+	}
+	else {
+	}
+    }
+    return false;
+}
+
+
+function mouseMove(event) 
+{
+    if (pressed) {
+	var coords = clickCoordsWithinElement(event);
+        var x = coords.x;
+        var y = coords.y;
+        var xDelta = x-lastX;
+        var yDelta = y-lastY;
+
+	if (Math.abs(x-firstX) > 2) {
+	    var spinBy = (lastXDelta<0)?-1:1;
+	    spin(spinBy);
+	}
+
+	// fuzzy factor to determine drage versus sloppy click
+        if (Math.abs(xDelta) + Math.abs(yDelta) > 2) {  
+            dragging = true;
+	    lastXDelta = xDelta;
+
+	    console.log("dragging: " + xDelta);
+	    var spinBy = (lastXDelta<0)?-1:1;
+	    spin(spinBy);
+
+            lastX = x;
+            lastY = y;
+        }
+    }
 }
 
 
@@ -511,10 +583,11 @@ var stack = new Array(stackSize);
 var stackPointer = 0;
 var cellsToShow, bombsToCreate;
 var xPos = 0;
-var spinning = false;
-var pendingSpin = "";
 var gridElem;
-
+var pressed = false;
+var dragging = false;
+var lastX, lastY, lastXDelta;
+var firstX, firstXPos;
 
 
 window.onload = function() 
@@ -529,6 +602,16 @@ window.onload = function()
     gridElem = document.getElementById("grid");
     gridElem.addEventListener("webkitAnimationStart", animationStart, true);
     gridElem.addEventListener("webkitAnimationEnd", animationEnd, true);
+
+    gridElem.addEventListener('mousedown', mouseDown, false);
+    gridElem.addEventListener('mousemove', mouseMove, false);
+    gridElem.addEventListener('mouseup', mouseUp, false);
+    var body = document.getElementsByTagName("body")[0];
+    body.addEventListener('mousedown', mouseDown, false);
+    body.addEventListener('mousemove', mouseMove, false);
+    body.addEventListener('mouseup', mouseUp, false);
+
+    //body.addEventListener('mouseout', mouseUp, true);
 
     loadFloodFill(xMax,yMax,bombRatio,cellHeight);
 };
