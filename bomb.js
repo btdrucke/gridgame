@@ -1,13 +1,3 @@
-var grid = [];
-var stackSize = 5000;
-var stack = new Array(stackSize);
-var stackPointer = 0;
-var yMax = 50;
-var xMax = 50;
-var cellsToShow, bombsToCreate;
-
-var clickSound = document.getElementById('click');
-
 function hasClassName(inElement, inClassName)
 {
     var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)');
@@ -277,6 +267,7 @@ function show(x,y)
 	--cellsToShow;
     }
 
+    var clickSound = document.getElementById('click');
     clickSound.play();
 }
 
@@ -333,6 +324,16 @@ function doHint()
     setMessage("Hint: ("+xHint+"x"+yHint+")");
     floodFill(xHint, yHint);
 }
+
+
+var grid = [];
+var stackSize = 5000;
+var stack = new Array(stackSize);
+var stackPointer = 0;
+var yMax = 50;
+var xMax = 50;
+var cellsToShow, bombsToCreate;
+
 
 window.onload = function() {
     document.getElementById("reset").addEventListener("click", function(event) {
