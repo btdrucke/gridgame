@@ -14,20 +14,56 @@ function getKeyCode(event)
 
 function spin(by) 
 {
+    if (!do3D) return;
     by = Math.round(by||1);
     xPos += by;
+    var gridElem = document.getElementById("grid");
     gridElem.style.webkitTransform = "rotateY("+xPos*360/xMax+"deg)";
+}
+
+// xMax = 36
+// 0 -> 35 := 0 -> -1
+// 35 -> 0 := 35 -> 36
+// 35 -> 36 := 35 -> 36
+
+
+function normalizeX(x)
+{
+    var xTemp = (x % xMax);
+    return (xTemp < 0) ? (xTemp+xMax) : xTemp;
 }
 
 function spinTo(x)
 {
-    if (x - xPos > xMax/2) {
-	xPos = -x + xMax;
+    if (!do3D) return;
+    console.log("[spinTo] xPos:"+xPos+", x:"+x);
+    if (x == xPos) return;
+    
+    var xPosNorm = normalizeX(xPos);
+    var xNorm = normalizeX(Math.round(x));
+    console.log("  xPosNorm:"+xPosNorm+", xNorm:"+xNorm);
+
+    var cwDist, ccwDist;
+    if (xPosNorm > xNorm) {
+	cwDist = xMax - xPosNorm + xNorm;
+	ccwDist = xPosNorm - xNorm;
     }
     else {
-	xPos = -x;
+	cwDist = xNorm - xPosNorm;
+	ccwDist = xMax + xPosNorm - xNorm;
     }
-    gridElem.style.webkitTransform = "rotateY("+xPos*360/xMax+"deg)";
+
+    if (cwDist < ccwDist) {
+	xPos += cwDist;
+    }
+    else {
+	xPos -= ccwDist;
+    }
+    console.log("  cw:"+cwDist+", ccw:"+ccwDist+", xPos:"+xPos);
+    console.log("  deg:"+xPos*360/xMax);
+
+    var gridElem = document.getElementById("grid");
+    gridElem.style.webkitTransform = "rotateY(-"+xPos*360/xMax+"deg)";
 }
 
 function handleKeyDown(event) 
@@ -36,10 +72,10 @@ function handleKeyDown(event)
     
     switch (code) {
     case 37: //left
-	spin(-1);
+	spinTo(xPos-1);
 	break;
     case 39: //right
-	spin(1);
+	spinTo(xPos+1);
 	break;
     }
     return false;
@@ -182,9 +218,8 @@ function conditionalShow(x,y)
 function floodFill(x, y)
 {
     console.log("floodFill",x,y);
-    if (isShown(x,y)) return;
-
     spinTo(x);
+    if (isShown(x,y)) return;
     
     if (grid[y][x].count > 0) {
     	show(x,y);
@@ -324,10 +359,8 @@ function placeBombs(xNone, yNone)
         if (hasBomb(xBomb, yBomb)) {
             continue;
         }
-        else {
-            placeBomb(xBomb, yBomb);
-            --bombsToCreate;
-        }
+        placeBomb(xBomb, yBomb);
+        --bombsToCreate;
     }
 }
 
@@ -378,6 +411,7 @@ function createGrid3d(cellHeight)
     var radius = circum/(2*Math.PI);
     var cellRot = 360/xMax;
 
+    var gridElem = document.getElementById("grid");
     for (var i = gridElem.childNodes.length-1; i>=0; --i) {
         gridElem.removeChild(gridElem.childNodes[i]);
     }
@@ -405,6 +439,7 @@ function createGrid3d(cellHeight)
 
 function createGrid(cellHeight)
 {
+    var gridElem = document.getElementById("grid");
     for (var i = gridElem.childNodes.length-1; i>=0; --i) {
         gridElem.removeChild(gridElem.childNodes[i]);
     }
@@ -503,6 +538,7 @@ function mouseDown(event)
 	firstXPos = xPos;
 	firstX = lastX = coords.x;
 	lastY = coords.y
+	lastTime = new Date();
 	pressed = true;
 	dragging = false;
     }
@@ -514,13 +550,10 @@ function mouseUp(event)
     if (pressed) {
         pressed = false;
 	if (dragging) {
-	    if (Math.abs(lastXDelta) > 2) {
-		var a = (lastXDelta<0)?-1:1;
-		var b = Math.abs(lastXDelta)/6;
-		var c = Math.min(xMax/2, b)
-		var spinBy = c * a;
-		console.log("flick:" + lastXDelta+ ", spinBy:"+spinBy);
-		spin(spinBy);
+	    if (Math.abs(lastXRate) > 0.05) {
+		console.log("flick:" + lastXRate);
+		var spinBy = Math.max(xMax-1,lastXRate * 20);
+		spinTo(xPos + spinBy);
 	    }
 	    dragging = false;
 	}
@@ -535,46 +568,32 @@ function mouseMove(event)
 {
     if (pressed) {
 	var coords = clickCoordsWithinElement(event);
-        var x = coords.x;
-        var y = coords.y;
-        var xDelta = x-lastX;
-        var yDelta = y-lastY;
+	var thisTime = new Date();
+        var xDelta = coords.x - lastX;
+	var timeDelta = thisTime - lastTime;
+	var totalXDelta = coords.x - firstX;
 
-	if (Math.abs(x-firstX) > 2) {
-	    var spinBy = (lastXDelta<0)?-1:1;
-	    spin(spinBy);
+	if (Math.abs(totalXDelta) > 4) {
+	    var spinBy = totalXDelta / 30;
+	    spinTo(firstXPos - spinBy);
 	}
 
 	// fuzzy factor to determine drage versus sloppy click
-        if (Math.abs(xDelta) + Math.abs(yDelta) > 2) {  
+        if (Math.abs(xDelta) > 4) {  
             dragging = true;
-	    lastXDelta = xDelta;
-
-	    console.log("dragging: " + xDelta);
-	    var spinBy = (lastXDelta<0)?-1:1;
-	    spin(spinBy);
-
-            lastX = x;
-            lastY = y;
+	    lastXRate = xDelta/timeDelta;
+	    console.log("dragging: " + lastX,coords.x,xDelta, lastTime, lastXRate);
+            lastX = coords.x;
         }
     }
 }
 
 
-var do3D = true;
-var bombRatio = 0.125
-var xMax, yMax, cellHeight;
-
-if (do3D) {
-    xMax = 36;
-    yMax = 10;
-    cellHeight = 40;
-}
-else {
-    xMax = 10;
-    yMax = 10;
-    cellHeight = 50;
-}
+var do3D = false;
+var bombRatio = 0.125;
+var xMax = 10;
+var yMax = 10;
+var cellHeight = 50;
 
 var grid = [];
 var stackSize = 5000;
@@ -582,35 +601,62 @@ var stack = new Array(stackSize);
 var stackPointer = 0;
 var cellsToShow, bombsToCreate;
 var xPos = 0;
-var gridElem;
 var pressed = false;
 var dragging = false;
-var lastX, lastY, lastXDelta;
-var firstX, firstXPos;
+
+var firstX, lastX, lastXDelta, totalXDelta;
+var firstXPos, lastTime;
 
 
-window.onload = function() 
+function start2d()
 {
+    do3D = false;
+    xMax = 10;
+    yMax = 10;
+    cellHeight = 50;
+    loadFloodFill(xMax,yMax,bombRatio,cellHeight);
+
+    var gridElem = document.getElementById("grid");
+    gridElem.removeEventListener('mousedown', false);
+    gridElem.removeEventListener('mousemove', false);
+    gridElem.removeEventListener('mouseup', false);
+
+    var body = document.getElementsByTagName("body")[0];
+    body.removeEventListener('mousedown', false);
+    body.removeEventListener('mousemove', false);
+    body.removeEventListener('mouseup', false);
+    body.addEventListener('mouseout', mouseUp, false);
+
+    document.onkeydown = undefined;
+}
+
+
+function start3d()
+{
+    do3D = true;
+    xMax = 36;
+    yMax = 10;
+    cellHeight = 40;
+    loadFloodFill(xMax,yMax,bombRatio,cellHeight);
+
     document.onkeydown = handleKeyDown;
 
-    document.getElementById("reset").addEventListener("click", function(event) {
-	loadFloodFill(xMax,yMax,bombRatio,cellHeight);
-    });
-    document.getElementById("hint").addEventListener("click", doHint);
-
-    gridElem = document.getElementById("grid");
-    gridElem.addEventListener("webkitAnimationStart", animationStart, true);
-    gridElem.addEventListener("webkitAnimationEnd", animationEnd, true);
-
+    var gridElem = document.getElementById("grid");
     gridElem.addEventListener('mousedown', mouseDown, false);
     gridElem.addEventListener('mousemove', mouseMove, false);
     gridElem.addEventListener('mouseup', mouseUp, false);
+
     var body = document.getElementsByTagName("body")[0];
     body.addEventListener('mousedown', mouseDown, false);
     body.addEventListener('mousemove', mouseMove, false);
     body.addEventListener('mouseup', mouseUp, false);
+    //body.addEventListener('mouseout', mouseUp, false);
+}
 
-    //body.addEventListener('mouseout', mouseUp, true);
-
-    loadFloodFill(xMax,yMax,bombRatio,cellHeight);
+window.onload = function() 
+{
+    document.getElementById("reset2d").addEventListener("click", start2d);
+    document.getElementById("reset3d").addEventListener("click", start3d);
+    document.getElementById("hint").addEventListener("click", doHint);
+    start3d();
 };

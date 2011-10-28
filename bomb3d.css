@@ -14,7 +14,7 @@ button {
     border: 3px solid black;
     position: relative;
     top: 70px;
-}
+},
 
 #message {
     background-color: white;
@@ -54,8 +54,8 @@ button {
     text-align: center;
     font-family: Times, serif;
     font-size: 24pt;
+    vertical-align: middle;
     color: black;
-    background-color: rgba(255, 255, 255, 0.6);
     -webkit-transition: -webkit-transform 2s;
     -webkit-backface-visibility: hidden;  // visible;
 
@@ -71,6 +71,9 @@ button {
     border: 1px solid;
     display: table-cell;
     vertical-align: middle;
+    font-family: Times, serif;
+    font-size: 24pt;
+    color: black;
 }
 
 .hiddenEven {
