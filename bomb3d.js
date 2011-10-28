@@ -72,6 +72,8 @@ function handleKeyDown(event)
     switch (code) {
     case 17: //ctrl
 	ctrlPressed = true;
+	pressed = false;
+	dragging = false;
 	var flagButtonElem = document.getElementById("flag");
 	addClassName(flagButtonElem, "flagChoice");
 	if (currCoords) {
@@ -204,9 +206,19 @@ function explode(x,y)
 function dropFlag(x,y) 
 {
     if (isHidden(x,y)) {
+	grid[y][x].hasFlag = true;
 	addClassName(grid[y][x].cell, "hasFlag");
     }
 }
+
+function removeFlag(x,y) 
+{
+    if (isHidden(x,y)) {
+	grid[y][x].hasFlag = false;
+	removeClassName(grid[y][x].cell, "hasFlag");
+    }
+}
+
 
 function enterCell(x,y)
 {
@@ -227,6 +239,16 @@ function leaveCell(x,y)
 function doFloodFill(x,y)
 {
     if (!cellsToShow) return;
+
+    if (ctrlPressed) {
+	if (hasFlag(x,y)) {
+	    removeFlag(x,y);
+	} 
+	else {
+	    dropFlag(x,y);
+	}
+	return;
+    }
 
     if (bombsToCreate) {
 	placeBombs(x,y);
@@ -355,6 +377,11 @@ function hasBomb(x, y)
     return (grid[y][x].count > 8);
 }
 
+function hasFlag(x, y) 
+{
+    return (grid[y][x].hasFlag);
+}
+
 function xInRange(x)
 {
     return (x>=0) && (x < xMax);
@@ -437,6 +464,10 @@ function show(x,y)
 
     var cell = grid[y][x].cell;
     if (hasBomb(x,y)) {
+	if (hasFlag(x,y)) {
+	    addClassName(cell, "flagChoice");
+	}
+	removeClassName(cell, "hasFlag");
 	addClassName(cell, "hasBomb");
 	cell.style.backgroundSize = cellHeight+"px "+cellHeight+"px";
     }
@@ -474,7 +505,7 @@ function createGrid3d(cellHeight)
 	for (var x = 0; x < xMax; ++x) {
 	    var xRot = Math.round(x*cellRot);
 	    var cell = document.createElement('div');
-            grid[y][x] = {"cell": cell, "count": 0, "shown": false};
+            grid[y][x] = {"cell": cell, "count": 0, "shown": false, "hasFlag": false};
 	    addClassName(cell, "plane");
 	    addClassName(cell, (x+y)%2 ? "hiddenEven" : "hiddenOdd");
 	    //cell.innerText = x;
@@ -504,12 +535,14 @@ function createGrid(cellHeight)
         var row = document.createElement("div");
         for (var x = 0; x < xMax; ++x) {
             var cell = document.createElement("div");
-            grid[y][x] = {"cell": cell, "count": 0, "shown": false};
+            grid[y][x] = {"cell": cell, "count": 0, "shown": false, "hasFlag":false};
 	    addClassName(cell, "cell");
 	    addClassName(cell, (x+y)%2 ? "hiddenEven" : "hiddenOdd");
             cell.style.width  = cellHeight+'px';
 	    cell.style.height = cellHeight+'px';
-            cell.onclick      = new Function('doFloodFill('+x+', '+y+');');
+            cell.addEventListener("click", new Function('doFloodFill('+x+', '+y+');'), false);
+            cell.addEventListener("mouseover", new Function('enterCell('+x+', '+y+');'), false);
+            cell.addEventListener("mouseout", new Function('leaveCell('+x+', '+y+');'), false);
             row.appendChild(cell);
         }
         gridElem.appendChild(row);
@@ -598,7 +631,6 @@ function mouseDown(event)
 	pressed = true;
 	dragging = false;
     }
-    return true;
 }
 
 
@@ -617,7 +649,6 @@ function mouseUp(event)
 	else {
 	}
     }
-    return true;
 }
 
 
@@ -708,17 +739,17 @@ function start3d()
     document.onkeyup = handleKeyUp;
 
     var gridElem = document.getElementById("grid");
-    gridElem.addEventListener('mousedown', mouseDown, true);
-    gridElem.addEventListener('mousemove', mouseMove, true);
-    gridElem.addEventListener('mouseup', mouseUp, true);
+    gridElem.addEventListener('mousedown', mouseDown, false);
+    gridElem.addEventListener('mousemove', mouseMove, false);
+    gridElem.addEventListener('mouseup', mouseUp, false);
     //gridElem.addEventListener('webkitAnimationStart', animationStart, false);
     gridElem.addEventListener('webkitTransitionEnd', animationEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
-    //body.addEventListener('mousedown', mouseDown, true);
-    //body.addEventListener('mousemove', mouseMove, true);
-    //body.addEventListener('mouseup', mouseUp, true);
-    //body.addEventListener('mouseout', mouseUp, false);
+    body.addEventListener('mousedown', mouseDown, false);
+    body.addEventListener('mousemove', mouseMove, flase);
+    body.addEventListener('mouseup', mouseUp, false);
+    body.addEventListener('mouseout', mouseUp, false);
 }
 
 window.onload = function() 
