@@ -33,11 +33,12 @@ function normalizeX(x)
     return (xTemp < 0) ? (xTemp+xMax) : xTemp;
 }
 
-function spinTo(x)
+function spinTo(x, whenDone)
 {
     if (!do3D) return;
     console.log("[spinTo] xPos:"+xPos+", x:"+x);
-    if (x == xPos) return;
+    
+    //if (x == xPos) return; //We want an transform to start in any case so we can catch the end of it
     
     var xPosNorm = normalizeX(xPos);
     var xNorm = normalizeX(Math.round(x));
@@ -63,7 +64,11 @@ function spinTo(x)
     console.log("  deg:"+xPos*360/xMax);
 
     var gridElem = document.getElementById("grid");
+
     gridElem.style.webkitTransform = "rotateY(-"+xPos*360/xMax+"deg)";
+    if (whenDone && (whenDone instanceof Function)) {
+	postAnimationFn = whenDone;
+    }
 }
 
 function handleKeyDown(event) 
@@ -88,7 +93,11 @@ function animationStart(event)
 
 function animationEnd(event) 
 {
-    console.log("animation end");
+    console.log("transition end");
+    if (postAnimationFn) {
+	postAnimationFn();
+	postAnimationFn = undefined;
+    }
 }
 
 
@@ -164,11 +173,11 @@ function setMessage(msg)
 function explode(x,y)
 {
     console.log("explode",x,y);
+    var explodeSound = document.getElementById("explode");
+    spinTo(x)
     showAll();
     addClassName(grid[y][x].cell, "exploded");
     setMessage("You lose!");
-    spinTo(x);
-    var explodeSound = document.getElementById("explode");
     explodeSound.play();
 }
 
@@ -505,9 +514,11 @@ function doHint()
 	    }
 	}
     }
-    setMessage("Hint: ("+xHint+"x"+yHint+")");
-    floodFill(xHint, yHint);
-    grid[yHint][xHint].cell.style.webkitAnimationName = "hintPulse";
+    //setMessage("Hint: ("+xHint+"x"+yHint+")");
+    spinTo(xHint, function() {
+	floodFill(xHint, yHint);
+	grid[yHint][xHint].cell.style.webkitAnimationName = "hintPulse";
+    });
 }
 
 
@@ -604,8 +615,10 @@ var stack = new Array(stackSize);
 var stackPointer = 0;
 var cellsToShow, bombsToCreate;
 var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
+
 var pressed = false;
 var dragging = false;
+var postAnimationFn;
 
 var firstX, lastX, lastXDelta, totalXDelta;
 var firstXPos, lastTime;
@@ -624,14 +637,14 @@ function start2d()
     gridElem.removeEventListener('mousedown', false);
     gridElem.removeEventListener('mousemove', false);
     gridElem.removeEventListener('mouseup', false);
-    gridElem.removeEventListener('webkitAnimationStart', animationStart, false);
-    gridElem.removeEventListener('webkitAnimationEnd', animationEnd, false);
+    //gridElem.removeEventListener('webkitAnimationStart', animationStart, false);
+    gridElem.addEventListener('webkitTransitionEnd', animationEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
     body.removeEventListener('mousedown', false);
     body.removeEventListener('mousemove', false);
     body.removeEventListener('mouseup', false);
-    body.addEventListener('mouseout', mouseUp, false);
+    body.removeEventListener('mouseout', mouseUp, false);
 
     document.onkeydown = undefined;
 }
@@ -651,8 +664,8 @@ function start3d()
     gridElem.addEventListener('mousedown', mouseDown, false);
     gridElem.addEventListener('mousemove', mouseMove, false);
     gridElem.addEventListener('mouseup', mouseUp, false);
-    gridElem.addEventListener('webkitAnimationStart', animationStart, false);
-    gridElem.addEventListener('webkitAnimationEnd', animationEnd, false);
+    //gridElem.addEventListener('webkitAnimationStart', animationStart, false);
+    gridElem.addEventListener('webkitTransitionEnd', animationEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
     body.addEventListener('mousedown', mouseDown, false);
