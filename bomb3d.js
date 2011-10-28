@@ -21,12 +21,6 @@ function spin(by)
     gridElem.style.webkitTransform = "rotateY("+xPos*360/xMax+"deg)";
 }
 
-// xMax = 36
-// 0 -> 35 := 0 -> -1
-// 35 -> 0 := 35 -> 36
-// 35 -> 36 := 35 -> 36
-
-
 function normalizeX(x)
 {
     var xTemp = (x % xMax);
@@ -65,7 +59,7 @@ function spinTo(x, whenDone)
 
     var gridElem = document.getElementById("grid");
 
-    gridElem.style.webkitTransform = "rotateY(-"+xPos*360/xMax+"deg)";
+    gridElem.style.webkitTransform = "rotateY("+(-xPos*360/xMax)+"deg)";
     if (whenDone && (whenDone instanceof Function)) {
 	postAnimationFn = whenDone;
     }
@@ -76,6 +70,14 @@ function handleKeyDown(event)
     var code = getKeyCode(event);
     
     switch (code) {
+    case 17: //ctrl
+	ctrlPressed = true;
+	var flagButtonElem = document.getElementById("flag");
+	addClassName(flagButtonElem, "flagChoice");
+	if (currCoords) {
+	    addClassName(grid[currCoords.y][currCoords.x].cell, "flagChoice");
+	}
+	break;
     case 37: //left
 	spinTo(xPos+1);
 	break;
@@ -85,6 +87,24 @@ function handleKeyDown(event)
     }
     return false;
 }
+
+function handleKeyUp(event) 
+{
+    var code = getKeyCode(event);
+    
+    switch (code) {
+    case 17: //ctrl
+	ctrlPressed = false;
+	var flagButtonElem = document.getElementById("flag");
+	removeClassName(flagButtonElem, "flagChoice");
+	if (currCoords) {
+	    removeClassName(grid[currCoords.y][currCoords.x].cell, "flagChoice");
+	}
+	break;
+    }
+    return false;
+}
+
 
 function animationStart(event) 
 {
@@ -181,6 +201,28 @@ function explode(x,y)
     explodeSound.play();
 }
 
+function dropFlag(x,y) 
+{
+    if (isHidden(x,y)) {
+	addClassName(grid[y][x].cell, "hasFlag");
+    }
+}
+
+function enterCell(x,y)
+{
+    console.log("entered cell",x,y);
+    currCoords = {"x":x, "y":y};
+    if (ctrlPressed && isHidden(x,y)) {
+	addClassName(grid[y][x].cell, "flagChoice");
+    }
+}
+
+function leaveCell(x,y)
+{
+    console.log("left cell",x,y);
+    removeClassName(grid[y][x].cell, "flagChoice");
+    currCoords = undefined;
+}
 
 function doFloodFill(x,y)
 {
@@ -441,7 +483,9 @@ function createGrid3d(cellHeight)
 	    cell.style.webkitTransform = "rotateY(" +xRot+ "deg) \
                                           translateY("+(cellHeight*y-gridHalfHeight)+"px) \
                                           translateZ("+radius+"px)";
-            cell.onclick = new Function('doFloodFill('+x+', '+y+');');
+            cell.addEventListener("click", new Function('doFloodFill('+x+', '+y+');'), false);
+            cell.addEventListener("mouseover", new Function('enterCell('+x+', '+y+');'), false);
+            cell.addEventListener("mouseout", new Function('leaveCell('+x+', '+y+');'), false);
 	    gridElem.appendChild(cell);
 	}
     }
@@ -458,8 +502,6 @@ function createGrid(cellHeight)
     for (var y = 0; y < yMax; ++y) {
         grid[y] = [];
         var row = document.createElement("div");
-	row.className = "row";
-        row.style.backgroundColor = "white";
         for (var x = 0; x < xMax; ++x) {
             var cell = document.createElement("div");
             grid[y][x] = {"cell": cell, "count": 0, "shown": false};
@@ -547,7 +589,7 @@ function clickCoordsWithinElement(event) {
 
 function mouseDown(event) 
 {
-    if (!pressed) {
+    if (!ctrlPressed && !pressed) {
 	var coords = clickCoordsWithinElement(event);
 	firstXPos = xPos;
 	firstX = lastX = coords.x;
@@ -556,6 +598,7 @@ function mouseDown(event)
 	pressed = true;
 	dragging = false;
     }
+    return true;
 }
 
 
@@ -574,7 +617,7 @@ function mouseUp(event)
 	else {
 	}
     }
-    return false;
+    return true;
 }
 
 
@@ -616,6 +659,8 @@ var stackPointer = 0;
 var cellsToShow, bombsToCreate;
 var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
 
+var ctrlPressed = false;
+var currCoords;
 var pressed = false;
 var dragging = false;
 var postAnimationFn;
@@ -647,6 +692,7 @@ function start2d()
     body.removeEventListener('mouseout', mouseUp, false);
 
     document.onkeydown = undefined;
+    document.onkeyup = undefined;
 }
 
 
@@ -659,18 +705,19 @@ function start3d()
     loadFloodFill(xMax,yMax,bombRatio,cellHeight);
 
     document.onkeydown = handleKeyDown;
+    document.onkeyup = handleKeyUp;
 
     var gridElem = document.getElementById("grid");
-    gridElem.addEventListener('mousedown', mouseDown, false);
-    gridElem.addEventListener('mousemove', mouseMove, false);
-    gridElem.addEventListener('mouseup', mouseUp, false);
+    gridElem.addEventListener('mousedown', mouseDown, true);
+    gridElem.addEventListener('mousemove', mouseMove, true);
+    gridElem.addEventListener('mouseup', mouseUp, true);
     //gridElem.addEventListener('webkitAnimationStart', animationStart, false);
     gridElem.addEventListener('webkitTransitionEnd', animationEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
-    body.addEventListener('mousedown', mouseDown, false);
-    body.addEventListener('mousemove', mouseMove, false);
-    body.addEventListener('mouseup', mouseUp, false);
+    //body.addEventListener('mousedown', mouseDown, true);
+    //body.addEventListener('mousemove', mouseMove, true);
+    //body.addEventListener('mouseup', mouseUp, true);
     //body.addEventListener('mouseout', mouseUp, false);
 }
 

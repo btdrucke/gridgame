@@ -8,7 +8,17 @@ body {
 				       from(rgba(255, 255, 255, 0.5)),
 				       to(rgba(255, 255, 255, 0)));
     background-repeat: no-repeat;
+    font-family: Times, serif;
     -webkit-user-select: none;
+}
+
+#control {
+    position: relative;
+    top: 70px;
+    display: -webkit-box;
+    -webkit-box-orient: horizontal;
+    -webkit-box-pack: center;
+    -webkit-box-align: center;
 }
 
 button {
@@ -16,15 +26,24 @@ button {
     color: white;
     border: 2px solid white;
     border-radius: 5px;
-    position: relative;
-    top: 70px;
-},
+    height: 35px;
+}
+
+#flag {
+    background-image: url('myflag.png');
+    background-repeat: no-repeat;
+    background-size: 30px 30px;
+    background-position: center;
+    width: 35px;
+    color: transparent;
+}
 
 #message {
     background-color: white;
     width: 150px;
     position: relative;
     top: 90px;
+    display: table-cell;
 }    
 
 #stage {
@@ -51,7 +70,6 @@ button {
     border: 1px solid black;
     padding: 0px;
     text-align: center;
-    font-family: Times, serif;
     font-size: 24pt;
     vertical-align: middle;
     color: black;
@@ -60,7 +78,7 @@ button {
     -webkit-animation-direction: alternate;
     -webkit-animation-timing-function: ease-out;
     -webkit-transition: -webkit-transform 2s;
-    -webkit-backface-visibility: hidden;  // visible;
+    -webkit-backface-visibility: hidden;  //visible;
 
     position: absolute;
 }
@@ -104,8 +122,19 @@ button {
     background-image: url('bomb.png');
     background-position: center;
     background-repeat: no-repeat;
+    background-color: red;
 }
 
+.hasFlag {
+    background-image: url('myflag.png');
+    background-position: center;
+    background-size: 30px 30px;
+    background-repeat: no-repeat;
+}
+
+.flagChoice {
+    background-color: rgb(120,181,210);
+}
 
 @-webkit-keyframes hintPulse {
     0%,100% {z-index:999; -webkit-box-shadow: 0 0 0px 0px #f00;}
@@ -116,3 +145,4 @@ button {
     0% {background-color: yellow;}
     100% {background-color: red;}
 }
+
