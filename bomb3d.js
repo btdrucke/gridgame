@@ -72,10 +72,10 @@ function handleKeyDown(event)
     
     switch (code) {
     case 37: //left
-	spinTo(xPos-1);
+	spinTo(xPos+1);
 	break;
     case 39: //right
-	spinTo(xPos+1);
+	spinTo(xPos-1);
 	break;
     }
     return false;
@@ -410,6 +410,8 @@ function createGrid3d(cellHeight)
     var circum = cellWidth*xMax;
     var radius = circum/(2*Math.PI);
     var cellRot = 360/xMax;
+    var gridHalfHeight = Math.round(cellHeight * yMax / 2);
+    //gridHalfHeight = 50;
 
     var gridElem = document.getElementById("grid");
     for (var i = gridElem.childNodes.length-1; i>=0; --i) {
@@ -428,7 +430,7 @@ function createGrid3d(cellHeight)
 	    cell.style.height = ""+cellHeight+"px";
 	    cell.style.width = ""+cellWidth+"px";
 	    cell.style.webkitTransform = "rotateY(" +xRot+ "deg) \
-                                          translateY("+cellHeight*y+"px) \
+                                          translateY("+(cellHeight*y-gridHalfHeight)+"px) \
                                           translateZ("+radius+"px)";
             cell.onclick = new Function('doFloodFill('+x+', '+y+');');
 	    gridElem.appendChild(cell);
@@ -452,7 +454,8 @@ function createGrid(cellHeight)
         for (var x = 0; x < xMax; ++x) {
             var cell = document.createElement("div");
             grid[y][x] = {"cell": cell, "count": 0, "shown": false};
-	    cell.className    = "cell hidden";
+	    addClassName(cell, "cell");
+	    addClassName(cell, (x+y)%2 ? "hiddenEven" : "hiddenOdd");
             cell.style.width  = cellHeight+'px';
 	    cell.style.height = cellHeight+'px';
             cell.onclick      = new Function('doFloodFill('+x+', '+y+');');
@@ -600,7 +603,7 @@ var stackSize = 5000;
 var stack = new Array(stackSize);
 var stackPointer = 0;
 var cellsToShow, bombsToCreate;
-var xPos = 0;
+var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
 var pressed = false;
 var dragging = false;
 
@@ -617,9 +620,12 @@ function start2d()
     loadFloodFill(xMax,yMax,bombRatio,cellHeight);
 
     var gridElem = document.getElementById("grid");
+    gridElem.style.webkitTransform = "rotateY(0deg)";
     gridElem.removeEventListener('mousedown', false);
     gridElem.removeEventListener('mousemove', false);
     gridElem.removeEventListener('mouseup', false);
+    gridElem.removeEventListener('webkitAnimationStart', animationStart, false);
+    gridElem.removeEventListener('webkitAnimationEnd', animationEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
     body.removeEventListener('mousedown', false);
@@ -645,6 +651,8 @@ function start3d()
     gridElem.addEventListener('mousedown', mouseDown, false);
     gridElem.addEventListener('mousemove', mouseMove, false);
     gridElem.addEventListener('mouseup', mouseUp, false);
+    gridElem.addEventListener('webkitAnimationStart', animationStart, false);
+    gridElem.addEventListener('webkitAnimationEnd', animationEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
     body.addEventListener('mousedown', mouseDown, false);

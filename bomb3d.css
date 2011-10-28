@@ -8,10 +8,14 @@ body {
 				       from(rgba(255, 255, 255, 0.5)),
 				       to(rgba(255, 255, 255, 0)));
     background-repeat: no-repeat;
+    -webkit-user-select: none;
 }
 
 button {
-    border: 3px solid black;
+    background-color: transparent;
+    color: white;
+    border: 2px solid white;
+    border-radius: 5px;
     position: relative;
     top: 70px;
 },
@@ -23,57 +27,60 @@ button {
     top: 90px;
 }    
 
-#container {
-    -webkit-perspective: 800; /* For compatibility with iPhone 3.0, we leave off the units here */
-    -webkit-perspective-origin: 50% 50%;
+#stage {
     width: 100%;
     height: 600px;
-}
-
-#stage {
-    position: relative;
-    top: -160px;
-    width: 100%;
-    height: 100%;
     display: -webkit-box;
     -webkit-box-align: center;
     -webkit-box-pack: center;
     -webkit-user-select: none;
+    -webkit-perspective: 800;
+    -webkit-perspective-origin: 50% 50%;
     -webkit-transform: translateY(-20px);
     -webkit-transform-style: preserve-3d;
 }
 
 #grid {
+    position: relative;
+    top: 50px;
     -webkit-transition: -webkit-transform 0.5s;
     -webkit-transform-style: preserve-3d;
 }
 
 .plane {
-    position: absolute;
     border: 1px solid black;
+    padding: 0px;
     text-align: center;
     font-family: Times, serif;
     font-size: 24pt;
     vertical-align: middle;
     color: black;
-    -webkit-transition: -webkit-transform 2s;
-    -webkit-backface-visibility: hidden;  // visible;
-
     -webkit-animation-duration: 1s;
     -webkit-animation-iteration-count: 2;
     -webkit-animation-direction: alternate;
     -webkit-animation-timing-function: ease-out;
+    -webkit-transition: -webkit-transform 2s;
+    -webkit-backface-visibility: hidden;  // visible;
+
+    position: absolute;
 }
 
 .cell {
+    border: 1px solid black;
     padding: 0px;
     text-align: center;
-    border: 1px solid;
-    display: table-cell;
-    vertical-align: middle;
     font-family: Times, serif;
     font-size: 24pt;
+    vertical-align: middle;
     color: black;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-iteration-count: 2;
+    -webkit-animation-direction: alternate;
+    -webkit-animation-timing-function: ease-out;
+    -webkit-transition: -webkit-transform 2s;
+    -webkit-backface-visibility: hidden;  // visible;
+
+    display: table-cell;
 }
 
 .hiddenEven {
