@@ -721,9 +721,6 @@ function start2d()
     body.removeEventListener('mousemove', false);
     body.removeEventListener('mouseup', false);
     body.removeEventListener('mouseout', mouseUp, false);
-
-    document.onkeydown = undefined;
-    document.onkeyup = undefined;
 }
 
 
@@ -734,9 +731,6 @@ function start3d()
     yMax = 10;
     cellHeight = 40;
     loadFloodFill(xMax,yMax,bombRatio,cellHeight);
-
-    document.onkeydown = handleKeyDown;
-    document.onkeyup = handleKeyUp;
 
     var gridElem = document.getElementById("grid");
     gridElem.addEventListener('mousedown', mouseDown, false);
@@ -754,6 +748,9 @@ function start3d()
 
 window.onload = function() 
 {
+    document.onkeydown = handleKeyDown;
+    document.onkeyup = handleKeyUp;
+
     document.getElementById("reset2d").addEventListener("click", start2d);
     document.getElementById("reset3d").addEventListener("click", start3d);
     document.getElementById("hint").addEventListener("click", doHint);
