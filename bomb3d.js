@@ -76,7 +76,7 @@ function handleKeyDown(event)
 	dragging = false;
 	var flagButtonElem = document.getElementById("flag");
 	addClassName(flagButtonElem, "flagChoice");
-	if (currCoords) {
+	if (currCoords && cellsToShow) {
 	    addClassName(grid[currCoords.y][currCoords.x].cell, "flagChoice");
 	}
 	break;
@@ -99,7 +99,7 @@ function handleKeyUp(event)
 	ctrlPressed = false;
 	var flagButtonElem = document.getElementById("flag");
 	removeClassName(flagButtonElem, "flagChoice");
-	if (currCoords) {
+	if (currCoords && cellsToShow) {
 	    removeClassName(grid[currCoords.y][currCoords.x].cell, "flagChoice");
 	}
 	break;
@@ -677,6 +677,22 @@ function mouseMove(event)
 }
 
 
+function enterFlag(event)
+{
+    var flagElem = document.getElementById("flag");
+    addClassName(flagElem, "flagChoice");
+}
+
+
+function leaveFlag(event)
+{
+    if (!ctrlPressed) {
+	var flagElem = document.getElementById("flag");
+	removeClassName(flagElem, "flagChoice");
+    }
+}
+
+
 var do3D = false;
 var bombRatio = 0.125;
 var xMax = 10;
@@ -741,7 +757,7 @@ function start3d()
 
     var body = document.getElementsByTagName("body")[0];
     body.addEventListener('mousedown', mouseDown, false);
-    body.addEventListener('mousemove', mouseMove, flase);
+    body.addEventListener('mousemove', mouseMove, false);
     body.addEventListener('mouseup', mouseUp, false);
     body.addEventListener('mouseout', mouseUp, false);
 }
@@ -754,5 +770,9 @@ window.onload = function()
     document.getElementById("reset2d").addEventListener("click", start2d);
     document.getElementById("reset3d").addEventListener("click", start3d);
     document.getElementById("hint").addEventListener("click", doHint);
+    var flagElem = document.getElementById("flag");
+    flagElem.addEventListener("mouseover", enterFlag);
+    flagElem.addEventListener("mouseout", leaveFlag);
+
     start3d();
 };
