@@ -1,0 +1,16 @@
+{
+  "name": "Minesweeper 3D",
+  "description": "A three-dimensional version of the classic logic game",
+  "version": "1",
+  "app": {
+    "launch": {
+      "local_path": "index.html"
+    }
+  },
+  "icons": {
+    "16": "bomb-16x16.png",
+    "128": "bomb-128x128.png",
+  },
+  "permissions": [
+  ]
+}
