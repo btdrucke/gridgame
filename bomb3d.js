@@ -86,6 +86,12 @@ function handleKeyDown(event)
     case 39: //right
 	spinTo(xPos-1);
 	break;
+    case 33: //page up
+	spinTo(xPos+xMax/2);
+	break;
+    case 34: //page down
+	spinTo(xPos-xMax/2-1);
+	break;
     }
     return false;
 }
