@@ -39,10 +39,12 @@ button {
 }
 
 #message {
-    background-color: white;
+    background-color: transparent;
+    color: white;
+    font-size: 24px;
     width: 150px;
     position: relative;
-    top: 90px;
+    top: 75px;
     display: table-cell;
 }    
 
