@@ -178,10 +178,13 @@ function emptyStack()
 
 function queueShow(x,y) 
 {
-    console.log("queue show",x,y);
-    grid[y][x].shown = true;
+    var cell = grid[y][x];
+    if (cell.shown) return;  // TODO: hack because duplicates are getting in the list somehow!
+    cell.shown = true;
     toShowList.push({"x":x, "y":y});
-    --cellsToShow;
+    if (!hasBomb(x, y)) {
+	--cellsToShow;
+    }
 }
 
 function showAll(x,y)
@@ -301,19 +304,63 @@ function conditionalShow(x,y)
 }
 
 
-function doShow(x,y) 
+function doShowOnce()
 {
-    // TODO: sort by distance to (x,y)
-    // TODO: pause to play sound for each cell revealed
-    while (toShowList.length) {
+    if (!showTimerId) return;
+
+    if (toShowList.length) {
 	var coord = toShowList.pop();
 	show(coord.x, coord.y);
     }
+    else {
+	window.clearInterval(showTimerId);
+	showTimerId = undefined;
+	console.log("cellsToShow",cellsToShow);
+    }
+}
+
+function doShow(x,y) 
+{
+    // TODO: pause to play sound for each cell revealed
+
+    toShowList.sort(function(a,b) {
+	var aDistX = Math.abs(a.x-x);
+	var bDistX = Math.abs(b.x-x);
+	if (aDistX > xMax/2) aDistX = Math.abs(aDistX - xMax);
+	if (bDistX > xMax/2) bDistX = Math.abs(bDistX - xMax);
+	var aDist = Math.pow(aDistX,2) + Math.pow(Math.abs(a.y-y),2);
+	var bDist = Math.pow(bDistX,2) + Math.pow(Math.abs(b.y-y),2);
+	if (aDist == bDist) return 0;
+	else if (aDist < bDist) return 1;
+	else return -1;
+    });
+
+    var coord = toShowList.pop();
+    show(coord.x, coord.y);
+    showTimerId = window.setInterval("doShowOnce()", showTimerDelay);
 }
 
 
-function floodFill(x, y)
+function win(x,y) 
 {
+    setMessage("You WIN!");
+    for(var yy=0; yy<yMax; ++yy) {
+        for(var xx=0; xx<xMax; ++xx) {
+	    if (hasBomb(xx,yy)) {
+		grid[yy][xx].hasFlag = true;
+	    }
+        }
+    }
+    showAll(x, y);
+    var successSound = document.getElementById("success");
+    successSound.play();
+}
+
+function floodFill(startX, startY)
+{
+    var x = startX;
+    var y = startY;
+
     console.log("floodFill",x,y);
     spinTo(x);
     if (isShown(x,y)) return;
@@ -321,11 +368,11 @@ function floodFill(x, y)
     if (grid[y][x].count > 0) {
         queueShow(x, y);
 	if (!cellsToShow) {
-	    setMessage("You WIN!");
-	    var successSound = document.getElementById("success");
-	    successSound.play();
+	    win(x,y);
 	}
-	doShow(x,y);
+	else {
+	    doShow(x,y);
+	}
     	return;
     }
 
@@ -362,7 +409,8 @@ function floodFill(x, y)
 	    }
 	    
 	    if (!cellsToShow) {
-		setMessage("You WIN!");
+		win(startX,startY);
+		return;
 	    }
 
 	    var leftNeedsShowing = do3D 
@@ -390,7 +438,7 @@ function floodFill(x, y)
             ++y1;
         }
     }
-    doShow(x,y);
+    doShow(startX,startY);
 }
 
 function hasBomb(x, y) 
@@ -480,7 +528,7 @@ function isShown(x,y)
 
 function show(x,y)
 {
-    console.log("show",x,y);
+    //console.log("show",x,y);
 
     grid[y][x].shown = true;
 
@@ -501,7 +549,6 @@ function show(x,y)
         }
         var gb = Math.round(255 * (8-count)/8);
         cell.style.backgroundColor = "rgb(255,"+gb+","+gb+")";
-	--cellsToShow;
     }
 
     var clickSound = document.getElementById('click');
@@ -593,11 +640,11 @@ function loadFloodFill(w, h, bombRatio, cellHeight)
 
 function doHint()
 {
-    if (!cellsToShow) return;
-
     if (bombsToCreate) {
 	placeBombs();
     }
+
+    if (!cellsToShow) return;
 
     var xHint = Math.floor(Math.random()*xMax);
     var yHint = Math.floor(Math.random()*yMax);
@@ -612,10 +659,16 @@ function doHint()
 	}
     }
     //setMessage("Hint: ("+xHint+"x"+yHint+")");
-    spinTo(xHint, function() {
+    if (do3D){
+	spinTo(xHint, function() {
+	    floodFill(xHint, yHint);
+	    grid[yHint][xHint].cell.style.webkitAnimationName = "hintPulse";
+	});
+    }
+    else {
 	floodFill(xHint, yHint);
 	grid[yHint][xHint].cell.style.webkitAnimationName = "hintPulse";
-    });
+    }
 }
 
 
@@ -715,36 +768,19 @@ function leaveFlag(event)
 }
 
 
-var do3D = false;
-var bombRatio = 0.125;
-var xMax = 10;
-var yMax = 10;
-var cellHeight = 50;
-
-var grid = [];
-var stackSize = 5000;
-var stack = new Array(stackSize);
-var stackPointer = 0;
-var toShowList = [];
-var cellsToShow, bombsToCreate;
-var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
-
-var ctrlPressed = false;
-var currCoords;
-var pressed = false;
-var dragging = false;
-var postAnimationFn;
-
-var firstX, lastX, lastXDelta, totalXDelta;
-var firstXPos, lastTime;
-
-
 function start2d()
 {
+    if (showTimerId) showTimerId = undefined;
     do3D = false;
     xMax = 10;
     yMax = 10;
     cellHeight = 50;
+    grid = [];
+    stackSize = 5000;
+    stack = new Array(stackSize);
+    stackPointer = 0;
+    toShowList = [];
+
     loadFloodFill(xMax,yMax,bombRatio,cellHeight);
 
     var gridElem = document.getElementById("grid");
@@ -765,10 +801,17 @@ function start2d()
 
 function start3d()
 {
+    if (showTimerId) showTimerId = undefined;
     do3D = true;
     xMax = 36;
     yMax = 10;
     cellHeight = 40;
+    grid = [];
+    stackSize = 5000;
+    stack = new Array(stackSize);
+    stackPointer = 0;
+    toShowList = [];
+
     loadFloodFill(xMax,yMax,bombRatio,cellHeight);
 
     var gridElem = document.getElementById("grid");
@@ -784,6 +827,32 @@ function start3d()
     body.addEventListener('mouseup', mouseUp, false);
     body.addEventListener('mouseout', mouseUp, false);
 }
+
+var do3D = false;
+var bombRatio = 0.125;
+var xMax = 10;
+var yMax = 10;
+var cellHeight = 50;
+
+var grid = [];
+var stackSize = 5000;
+var stack = new Array(stackSize);
+var stackPointer = 0;
+var toShowList = [];
+var cellsToShow, bombsToCreate;
+var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
+
+var ctrlPressed = false;
+var currCoords;
+var pressed = false;
+var dragging = false;
+var postAnimationFn;
+var showTimerId;
+var showTimerDelay = 10;
+
+var firstX, lastX, lastXDelta, totalXDelta;
+var firstXPos, lastTime;
+
 
 window.onload = function() 
 {

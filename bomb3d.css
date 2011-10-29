@@ -116,6 +116,7 @@ button {
     -webkit-animation-iteration-count: 10;
     -webkit-animation-direction: alternate;
     -webkit-animation-timing-function: ease-in-out;
+    -webkit-animation-fill-mode: forwards;
 }
 
 .hasBomb {
@@ -137,8 +138,8 @@ button {
 }
 
 @-webkit-keyframes hintPulse {
-    0%,100% {z-index:999; -webkit-box-shadow: 0 0 0px 0px #f00;}
-    50% {z-index:999; -webkit-box-shadow: 0 0 5px 5px #f00;}
+    0%,100% {z-index:999; -webkit-box-shadow: inset 0 0 0px 0px #f00;}
+    50% {z-index:999; -webkit-box-shadow: inset 0 0 5px 5px #f00;}
 }
 
 @-webkit-keyframes explodePulse {
