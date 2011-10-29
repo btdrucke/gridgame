@@ -332,8 +332,8 @@ function doShow(x,y)
     toShowList.sort(function(a,b) {
 	var aDistX = Math.abs(a.x-x);
 	var bDistX = Math.abs(b.x-x);
-	if (aDistX > xMax/2) aDistX = Math.abs(aDistX - xMax);
-	if (bDistX > xMax/2) bDistX = Math.abs(bDistX - xMax);
+	if (do3D && (aDistX > xMax/2)) aDistX = Math.abs(aDistX - xMax);
+	if (do3D && (bDistX > xMax/2)) bDistX = Math.abs(bDistX - xMax);
 	var aDist = Math.pow(aDistX,2) + Math.pow(Math.abs(a.y-y),2);
 	var bDist = Math.pow(bDistX,2) + Math.pow(Math.abs(b.y-y),2);
 	if (aDist == bDist) return 0;

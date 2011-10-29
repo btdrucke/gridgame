@@ -9,7 +9,7 @@
   },
   "icons": {
     "16": "bomb-16x16.png",
-    "128": "bomb-128x128.png",
+    "128": "bomb-128x128.png"
   },
   "permissions": [
   ]
