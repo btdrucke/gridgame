@@ -4,7 +4,7 @@ body {
     font-size: 12px;
     background-image: -webkit-gradient(radial,
 				       center center, 1,
-				       center center, 300,
+				       center center, 350,
 				       from(rgba(255, 255, 255, 0.5)),
 				       to(rgba(255, 255, 255, 0)));
     background-repeat: no-repeat;

@@ -76,7 +76,7 @@ function handleKeyDown(event)
 	dragging = false;
 	var flagButtonElem = document.getElementById("flag");
 	addClassName(flagButtonElem, "flagChoice");
-	if (currCoords && cellsToShow) {
+	if (currCoords && cellsToShow && isHidden(currCoords.x,currCoords.y)) {
 	    addClassName(grid[currCoords.y][currCoords.x].cell, "flagChoice");
 	}
 	break;
@@ -99,7 +99,7 @@ function handleKeyUp(event)
 	ctrlPressed = false;
 	var flagButtonElem = document.getElementById("flag");
 	removeClassName(flagButtonElem, "flagChoice");
-	if (currCoords && cellsToShow) {
+	if (currCoords && cellsToShow && isHidden(currCoords.x,currCoords.y)) {
 	    removeClassName(grid[currCoords.y][currCoords.x].cell, "flagChoice");
 	}
 	break;
@@ -176,14 +176,22 @@ function emptyStack()
     stackPointer = 0;
 }
 
-
-function showAll()
+function queueShow(x,y) 
 {
-    for(var row=0; row<yMax; ++row) {
-        for(var col=0; col<xMax; ++col) {
-            show(col, row);
+    console.log("queue show",x,y);
+    grid[y][x].shown = true;
+    toShowList.push({"x":x, "y":y});
+    --cellsToShow;
+}
+
+function showAll(x,y)
+{
+    for(var yy=0; yy<yMax; ++yy) {
+        for(var xx=0; xx<xMax; ++xx) {
+            queueShow(xx, yy);
         }
     }
+    doShow(x,y);
 }
 
 function setMessage(msg)
@@ -197,7 +205,7 @@ function explode(x,y)
     console.log("explode",x,y);
     var explodeSound = document.getElementById("explode");
     spinTo(x)
-    showAll();
+    showAll(x,y);
     addClassName(grid[y][x].cell, "exploded");
     setMessage("You lose!");
     explodeSound.play();
@@ -208,6 +216,7 @@ function dropFlag(x,y)
     if (isHidden(x,y)) {
 	grid[y][x].hasFlag = true;
 	addClassName(grid[y][x].cell, "hasFlag");
+	spinTo(x);
     }
 }
 
@@ -222,7 +231,7 @@ function removeFlag(x,y)
 
 function enterCell(x,y)
 {
-    console.log("entered cell",x,y);
+    //console.log("entered cell",x,y);
     currCoords = {"x":x, "y":y};
     if (ctrlPressed && isHidden(x,y)) {
 	addClassName(grid[y][x].cell, "flagChoice");
@@ -231,8 +240,10 @@ function enterCell(x,y)
 
 function leaveCell(x,y)
 {
-    console.log("left cell",x,y);
-    removeClassName(grid[y][x].cell, "flagChoice");
+    //console.log("left cell",x,y);
+    if (isHidden(x,y)) {
+	removeClassName(grid[y][x].cell, "flagChoice");
+    }
     currCoords = undefined;
 }
 
@@ -284,7 +295,20 @@ function conditionalShow(x,y)
     else {
 	if ((x < 0) || (x >= xMax)) return;
     }
-    if ((grid[y][x].count > 0)) show(x, y);
+    if ((grid[y][x].count > 0)) {
+        queueShow(x, y);
+    }
+}
+
+
+function doShow(x,y) 
+{
+    // TODO: sort by distance to (x,y)
+    // TODO: pause to play sound for each cell revealed
+    while (toShowList.length) {
+	var coord = toShowList.pop();
+	show(coord.x, coord.y);
+    }
 }
 
 
@@ -295,13 +319,13 @@ function floodFill(x, y)
     if (isShown(x,y)) return;
     
     if (grid[y][x].count > 0) {
-    	show(x,y);
+        queueShow(x, y);
 	if (!cellsToShow) {
 	    setMessage("You WIN!");
-	    showAll();
 	    var successSound = document.getElementById("success");
 	    successSound.play();
 	}
+	doShow(x,y);
     	return;
     }
 
@@ -323,7 +347,7 @@ function floodFill(x, y)
 
         while ((y1 < yMax) && isHidden(x,y1) && (grid[y1][x].count == 0)) {
 	    conditionalShow(x-1, y1);
-            show(x, y1);
+            queueShow(x, y1);
 	    conditionalShow(x+1, y1);
             
 	    if (y1 > 0) {
@@ -339,7 +363,6 @@ function floodFill(x, y)
 	    
 	    if (!cellsToShow) {
 		setMessage("You WIN!");
-		showAll();
 	    }
 
 	    var leftNeedsShowing = do3D 
@@ -366,8 +389,8 @@ function floodFill(x, y)
             }
             ++y1;
         }
-
     }
+    doShow(x,y);
 }
 
 function hasBomb(x, y) 
@@ -457,8 +480,7 @@ function isShown(x,y)
 
 function show(x,y)
 {
-    //console.log("show",x,y);
-    if (isShown(x,y)) return;
+    console.log("show",x,y);
 
     grid[y][x].shown = true;
 
@@ -703,6 +725,7 @@ var grid = [];
 var stackSize = 5000;
 var stack = new Array(stackSize);
 var stackPointer = 0;
+var toShowList = [];
 var cellsToShow, bombsToCreate;
 var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
 
