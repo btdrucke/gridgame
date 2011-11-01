@@ -1,7 +1,7 @@
 {
   "name": "Minesweeper 3D",
   "description": "A three-dimensional version of the classic logic game",
-  "version": "1",
+  "version": "1.20111101",
   "app": {
     "launch": {
       "local_path": "index.html"

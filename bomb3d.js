@@ -114,12 +114,7 @@ function handleKeyUp(event)
 }
 
 
-function animationStart(event) 
-{
-    console.log("animation start");
-}
-
-function animationEnd(event) 
+function transitionEnd(event) 
 {
     console.log("transition end");
     if (postAnimationFn) {
@@ -794,14 +789,13 @@ function start2d()
     gridElem.removeEventListener('mousedown', false);
     gridElem.removeEventListener('mousemove', false);
     gridElem.removeEventListener('mouseup', false);
-    //gridElem.removeEventListener('webkitAnimationStart', animationStart, false);
-    gridElem.addEventListener('webkitTransitionEnd', animationEnd, false);
+    gridElem.addEventListener('webkitTransitionEnd', transitionEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
     body.removeEventListener('mousedown', false);
     body.removeEventListener('mousemove', false);
     body.removeEventListener('mouseup', false);
-    body.removeEventListener('mouseout', mouseUp, false);
+    //body.removeEventListener('mouseout', mouseUp, false);
 }
 
 
@@ -824,14 +818,13 @@ function start3d()
     gridElem.addEventListener('mousedown', mouseDown, false);
     gridElem.addEventListener('mousemove', mouseMove, false);
     gridElem.addEventListener('mouseup', mouseUp, false);
-    //gridElem.addEventListener('webkitAnimationStart', animationStart, false);
-    gridElem.addEventListener('webkitTransitionEnd', animationEnd, false);
+    gridElem.addEventListener('webkitTransitionEnd', transitionEnd, false);
 
     var body = document.getElementsByTagName("body")[0];
     body.addEventListener('mousedown', mouseDown, false);
     body.addEventListener('mousemove', mouseMove, false);
     body.addEventListener('mouseup', mouseUp, false);
-    body.addEventListener('mouseout', mouseUp, false);
+    //body.addEventListener('mouseout', mouseUp, false);
 }
 
 var do3D = false;
