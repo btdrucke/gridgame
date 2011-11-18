@@ -1,5 +1,192 @@
-// based on http://www.selfcontained.us/2009/09/16/getting-keycode-values-in-javascript/
+// from http://www.coolpage.com/developer/javascript/Correct%20OOP%20for%20Javascript.html
+Object.prototype.Inherits = function( parent )
+{
+    if( arguments.length > 1 ) {
+	parent.apply( this, Array.prototype.slice.call( arguments, 1 ) );
+    }
+    else {
+	parent.call( this );
+    }
+}
 
+// from http://www.coolpage.com/developer/javascript/Correct%20OOP%20for%20Javascript.html
+Function.prototype.Inherits = function( parent )
+{
+    this.prototype = new parent();
+    this.prototype.constructor = this;
+}
+
+
+window.Game = {};  // namespace
+window.Game.Logic = {};   // namespace
+
+Game.DataCell = function (x, y, parent) 
+{
+    // public 
+
+    this.elem = document.createElement("div");
+    this.neighbor = function(xDelta, yDelta) {
+	return parent.cell(x+xDelta, y+yDelta);
+    };
+
+    // private
+
+    var parent = parent;
+    var x = x;
+    var y = y;
+}
+
+
+Game.Data = function (xMax, yMax) 
+{
+    //public 
+
+    this.xMax = xMax;
+    this.yMax = yMax;
+
+    this.cell = function (x, y) {
+	if ((x >= 0) && (x < xMax) &&
+	    (y >= 0) && (y < yMax)) {
+	    return grid[y][x];
+	}
+	else {
+	    return undefined;
+	}
+    }
+
+    this.forEach = function (fn) {
+	if (!fn) return;
+	grid.forEach(function (row) {
+	    row.forEach(function (cell) {
+		fn(cell);
+	    });
+	});
+    }
+
+    // private
+
+    var grid = [];
+    for (var y = 0; y < yMax; ++y) {
+        grid[y] = [];
+	for (var x = 0; x < xMax; ++x) {
+            grid[y][x] = new Game.DataCell(x, y, this);
+	}
+    }
+}
+
+
+Game.Display = function (data, elemSize)
+{
+    this.forEach = function (fn) {
+	data.forEach( function (cell) {
+	    fn(cell.elem, cell.x, cell.y);
+	});
+    };
+
+    this.elemSize = elemSize;
+    this.displayElem = document.getElementById("display");
+}
+
+
+Game.Display.Plane = function (data, elemSize)
+{
+    this.Inherits(Game.Display, data, elemSize);
+
+    this.forEach(function (elem, x, y) {
+	elem.top  = elemSize*y + "px";
+	elem.left = elemSize*x + "px";
+        elem.style.width  = elemSize + "px";
+	elem.style.height = elemSize + "px";
+        displayElem.appendChild(elem);
+    });
+}
+
+
+Game.Display.Cylinder = function (data, elemDim)
+{
+    this.Inherits(Game.Display, data, elemSize);
+
+    var xElemSize = elemDim;
+    var yElemSize = elemDim;
+    var radius = (xElemSize/2) / Math.tan(Math.PI/data.xMax)
+    var xElemRot = 2*Math.PI / data.xMax;
+    var displayHalfHeight = Math.round(yElemSize * data.yMax / 2);
+
+    this.forEach(function (elem, x, y) {
+	var xTotalRot = x*xElemRot;
+	//elem.innerText = x;
+	elem.style.height = yElemSize + "px";
+	elem.style.width = xElemSize + "px";
+	elem.style.webkitTransform = ("rotateY("+xTotalRot+"rad) " +
+				      "translateY("+(yElemHSize*y - displayHalfHeight)+"px) " +
+                                      "translateZ("+radius+"px)");
+	this.displayElem.appendChild(elem);
+    });
+}
+
+
+Game.Display.Torus = function (data, elemDim)
+{
+    this.Inherits(Game.Display, data, elemSize);
+
+    var torusRadiusRatio = 0.5;
+
+    var xOuterElemSize = elemDim;
+    var xInnerElemSize = xOuterElemSize * torusRadiusRatio;
+    var xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/data.xMax)
+    var xInnerRadius = xOuterRadius * torusRadiusRatio;
+    var xMiddleRadius = (xOuterRadius + xInnerRadius)/2;
+    var xElemRot = 2*Math.PI/data.xMax;
+
+    var yElemSize = elemDim;
+    var yRadius = (yElemSize/2) / Math.tan(Math.PI/data.yMax)
+    var yElemRot = 2*Math.PI/data.yMax;
+
+    for (var x = 0; x < data.xMax; ++x) {
+	var slice = document.createElement('div');
+	data.displayElem.appendChild(slice);
+	var xTotalRot = x*xElemRot;
+	addClassName(slice, "slice");
+	slice.style.webkitTransform = ("rotateY("+xTotalRot+"rad) " +
+	                               "translateX("+(-xOuterElemSize/2)+"px) " +
+	                               "translateZ("+xMiddleRadius+"px)");
+	for (var y = 0; y < data.yMax; ++y) {
+	    var yTotalRot = y*yElemRot;
+	    var elem = data.cell(x, y).elem;
+	    var width = ((xOuterElemSize-xInnerElemSize)/2)*(Math.cos(yTotalRot)+1) + xInnerElemSize;
+	    elem.innerText = x;
+	    elem.style.height = yElemSize+"px";
+	    elem.style.width = width+"px";
+	    elem.style.lineHeight = width+"px";  // to valign text
+	    elem.style.webkitTransform = ("rotateX("+yRot+"rad) " +
+					  "translateX("+(xOuterElemSize-width)/2+"px) " +
+					  "translateZ("+yRadius+"px)");
+	    slice.appendChild(elem);
+	}
+    }
+}
+
+
+Game.Logic.Bomb = function (data, display)
+{
+    this.reset = function () {
+	data.forEach(function (cell) {
+	    cell.count = 0;
+	    cell.shown = false;
+	    cell.hasFlag = false;
+	});
+    };
+
+    display.forEach(function (elem, x, y) {
+	elem.className = "plane " + ((x+y)%2?"hiddenEven":"hiddenOdd");
+        elem.addEventListener("click",     new Function('doFloodFill('+x+', '+y+');'), false);
+        elem.addEventListener("mouseover", new Function('enterCell('+x+', '+y+');'), false);
+        elem.addEventListener("mouseout",  new Function('leaveCell('+x+', '+y+');'), false);
+    });
+}
+
+
+// based on http://www.selfcontained.us/2009/09/16/getting-keycode-values-in-javascript/
 function getKeyCode(event)
 {
     var keycode = null;
@@ -556,6 +743,7 @@ function show(x,y)
     clickSound.play();
 }
 
+
 function createGrid3d(cellHeight)
 {
     var cellWidth = cellHeight;
@@ -608,6 +796,8 @@ function createGrid(cellHeight)
             grid[y][x] = {"cell": cell, "count": 0, "shown": false, "hasFlag":false};
 	    addClassName(cell, "cell");
 	    addClassName(cell, (x+y)%2 ? "hiddenEven" : "hiddenOdd");
+	    //cell.top  = cellHeight*y + "px";
+	    //cell.left = cellHeight*x + "px";
             cell.style.width  = cellHeight+'px';
 	    cell.style.height = cellHeight+'px';
             cell.addEventListener("click", new Function('doFloodFill('+x+', '+y+');'), false);
@@ -629,6 +819,7 @@ function loadFloodFill(w, h, bombRatio, cellHeight)
 
     if (do3D) {
 	createGrid3d(cellHeight);
+	//createGridTorus(cellHeight);
     }
     else {
 	createGrid(cellHeight);
@@ -840,6 +1031,7 @@ var stackPointer = 0;
 var toShowList = [];
 var cellsToShow, bombsToCreate;
 var xPos = xMax;  // TODO: should be zero, but I'm having trouble with negative degree rotation
+var yPos;
 
 var ctrlPressed = false;
 var currCoords;

@@ -10,6 +10,7 @@ body {
     background-repeat: no-repeat;
     font-family: Times, serif;
     -webkit-user-select: none;
+    -webkit-transform-style: preserve-3d;
 }
 
 #control {
@@ -72,6 +73,7 @@ button {
     border: 1px solid black;
     padding: 0px;
     text-align: center;
+    font-family: Times, serif;
     font-size: 24pt;
     vertical-align: middle;
     color: black;
@@ -81,6 +83,7 @@ button {
     -webkit-animation-timing-function: ease-out;
     -webkit-transition: -webkit-transform 2s;
     -webkit-backface-visibility: hidden;  //visible;
+    display: table-cell;
 
     position: absolute;
 }
@@ -99,8 +102,9 @@ button {
     -webkit-animation-timing-function: ease-out;
     -webkit-transition: -webkit-transform 2s;
     -webkit-backface-visibility: hidden;  // visible;
-
     display: table-cell;
+
+    //position: absolute;
 }
 
 .hiddenEven {
