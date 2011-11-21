@@ -1,0 +1,143 @@
+.red {
+    background-color: red;
+}
+
+body {
+    background-color: black;
+    font-family: 'Lucida Grande', Verdana, Arial;
+    font-size: 12px;
+    background-image: -webkit-gradient(radial,
+				       center center, 1,
+				       center center, 350,
+				       from(rgba(255, 255, 255, 0.5)),
+				       to(rgba(255, 255, 255, 0)));
+    background-repeat: no-repeat;
+    -webkit-user-select: none;
+    -webkit-transform-style: preserve-3d;
+}
+
+#control {
+    position: relative;
+    top: 70px;
+    display: -webkit-box;
+    -webkit-box-orient: horizontal;
+    -webkit-box-pack: center;
+    -webkit-box-align: center;
+}
+
+button {
+    background-color: transparent;
+    color: white;
+    border: 2px solid white;
+    border-radius: 5px;
+    height: 35px;
+}
+
+#flag {
+    background-image: url('myflag.png');
+    background-repeat: no-repeat;
+    background-size: 30px 30px;
+    background-position: center;
+    width: 35px;
+    color: transparent;
+}
+
+#message {
+    background-color: transparent;
+    color: white;
+    font-size: 24px;
+    width: 150px;
+    position: relative;
+    top: 75px;
+    display: table-cell;
+}    
+
+#stage {
+    width: 100%;
+    height: 600px;
+    display: -webkit-box;
+    -webkit-box-align: center;
+    -webkit-box-pack: center;
+    -webkit-user-select: none;
+    -webkit-perspective: 2000;
+    -webkit-perspective-origin: 50% 0%;
+    -webkit-transform: translateY(-20px);
+    -webkit-transform-style: preserve-3d;
+}
+
+#grid {
+    position: relative;
+    top: 50px;
+    -webkit-transition: -webkit-transform 0.5s;
+    -webkit-transform-style: preserve-3d;
+}
+
+.slice {
+    -webkit-transform-style: preserve-3d;
+    position: absolute;
+}
+
+.cell {
+    border: 1px solid black;
+    padding: 0px;
+    text-align: center;
+    font-size: 12pt;
+    color: black;
+    display: table-cell;
+    vertical-align: middle;
+    position: absolute;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-iteration-count: 2;
+    -webkit-animation-direction: alternate;
+    -webkit-animation-timing-function: ease-out;
+    -webkit-transition: -webkit-transform 2s;
+    -webkit-backface-visibility: hidden;  // visible;
+    -webkit-transform-style: preserve-3d;
+}
+
+.bomb3d-hiddenEven {
+    background-color: #b0b0b0;
+}
+
+.bomb3d-hiddenOdd {
+    background-color: #a0a0a0;
+}
+
+.bomb3d-exploded {
+    background-color: yellow;
+    -webkit-animation-name: bomb3d-explodePulse;
+    -webkit-animation-duration: 0.5s;
+    -webkit-animation-iteration-count: 10;
+    -webkit-animation-direction: alternate;
+    -webkit-animation-timing-function: ease-in-out;
+    -webkit-animation-fill-mode: forwards;
+}
+
+.bomb3d-hasBomb {
+    background-image: url('bomb.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: red;
+}
+
+.bomb3d-hasFlag {
+    background-image: url('myflag.png');
+    background-position: center;
+    background-size: 30px 30px;
+    background-repeat: no-repeat;
+}
+
+.bomb3d-flagChoice {
+    background-color: rgb(120,181,210);
+}
+
+@-webkit-keyframes hintPulse {
+    0%,100% {z-index:999; -webkit-box-shadow: inset 0 0 0px 0px #f00;}
+    50% {z-index:999; -webkit-box-shadow: inset 0 0 5px 5px #f00;}
+}
+
+@-webkit-keyframes bomb3d-explodePulse {
+    0% {background-color: yellow;}
+    100% {background-color: red;}
+}
+
