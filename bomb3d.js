@@ -407,6 +407,8 @@ function dropFlag(x,y)
     if (isHidden(x,y)) {
 	grid[y][x].hasFlag = true;
 	addClassName(grid[y][x].cell, "hasFlag");
+        var clickSound = document.getElementById('click');
+        clickSound.play();
 	spinTo(x);
     }
 }
@@ -416,6 +418,8 @@ function removeFlag(x,y)
     if (isHidden(x,y)) {
 	grid[y][x].hasFlag = false;
 	removeClassName(grid[y][x].cell, "hasFlag");
+        var clickSound = document.getElementById('click');
+        clickSound.play();
     }
 }
 
