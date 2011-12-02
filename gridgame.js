@@ -56,6 +56,19 @@ Game.normalizeGridIndex = function (w, wMax)
     return (wTemp < 0) ? (wTemp+wMax) : wTemp;
 }
 
+// based on http://www.selfcontained.us/2009/09/16/getting-keycode-values-in-javascript/
+Game.getKeyCode = function (event)
+{
+    var keycode = null;
+    if (window.event) {
+        keycode = window.event.keyCode;
+    } 
+    else if(event) {
+        keycode = event.which;
+    }
+    return keycode;    
+}
+
 // ---------------------------------------------------------------
 // Game.DataCell, Game.Data: classes for game grids and grid cells
 // ---------------------------------------------------------------
@@ -165,14 +178,75 @@ Game.Topology = function (domId, data, elemSize)
     this.yPos = 0;
     this.elemSize = elemSize;
     this.domElem = document.getElementById(domId);
-    //this.domElem.addClassName("red");
 
     this.forEach = function (fn) {
         data.forEach( function (cell) {
             fn(cell.elem, cell.x(), cell.y());
         });
     };
+
+    this.registerKey = function (keyCode, downHandler, upHandler) {
+        if (downHandler && upHandler) {
+            _keyDownMap[keyCode] = downHandler;
+            _keyDownMap[keyCode] = upHandler;
+        }
+        else if (downHandler) {
+            _keyDownMap[keyCode] = downHandler;
+            delete _keyUpMap[keyCode];
+        }
+        else {
+            delete _keydownMap[keyCode];
+            delete _keyUpMap[keyCode];
+        }
+    }
+
+    var _keyUpMap = {};
+    var _keyDownMap = {};
+
+    _keyUpMap
+
+    var that = this;
+    function handleKeyDown (event)
+    {
+        var code = Game.getKeyCode(event);
+        switch (code) {
+        case 37: //left
+	    that.xSpinBy(-1);
+	    break;
+        case 38: //up
+	    that.ySpinBy(-1);
+	    break;
+        case 39: //right
+	    that.xSpinBy(1);
+	    break;
+        case 40: //down
+	    that.ySpinBy(1);
+	    break;
+            return false;
+        }
+    }
+    document.onkeydown = handleKeyDown;
 };
+
+Game.Topology.prototype.xSpinTo = function (xPos, callWhenDone)
+{
+    console.log("xSpinto:", xPos);
+}
+
+Game.Topology.prototype.ySpinTo = function (yPos, callWhenDone)
+{
+    console.log("ySpinto:", xPos);
+}
+
+Game.Topology.prototype.xSpinBy = function (xDelta, callWhenDone)
+{
+    this.xSpinTo(this.xPos + xDelta, callWhenDone);
+}
+
+Game.Topology.prototype.ySpinBy = function (yDelta, callWhenDone)
+{
+    this.xSpinTo(this.xPos + xDelta, callWhenDone);
+}
 
 
 // ----------------------------------------------------------
@@ -418,7 +492,7 @@ Game.Logic.Bomb3d.prototype.doShow = function (x,y)
 
 window.onload = function() 
 {
-    var data = new Game.Data(40, 10);
+    var data = new Game.Data(36, 10);
     var topo = new Game.Topology.Torus("grid", data, 50);
     var logic = new Game.Logic.Bomb3d(data, topo);
 };
