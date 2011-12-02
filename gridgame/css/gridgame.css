@@ -34,7 +34,7 @@ button {
 }
 
 #flag {
-    background-image: url('myflag.png');
+    background-image: url('../images/myflag.png');
     background-repeat: no-repeat;
     background-size: 30px 30px;
     background-position: center;
@@ -114,14 +114,14 @@ button {
 }
 
 .bomb3d-hasBomb {
-    background-image: url('bomb.png');
+    background-image: url('../images/bomb.png');
     background-position: center;
     background-repeat: no-repeat;
     background-color: red;
 }
 
 .bomb3d-hasFlag {
-    background-image: url('myflag.png');
+    background-image: url('../images/myflag.png');
     background-position: center;
     background-size: 30px 30px;
     background-repeat: no-repeat;
