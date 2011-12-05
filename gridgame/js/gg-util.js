@@ -7,6 +7,7 @@ window.Game = window.Game || {};  // namespace
 Object.prototype.Inherits = function( inParent )
 {
     var parent = Array.prototype.shift.call(arguments);
+    --arguments.length;
     parent.apply(this, arguments);
 }
 

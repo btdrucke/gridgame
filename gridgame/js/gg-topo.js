@@ -6,10 +6,11 @@ window.Game = window.Game || {};  // namespace
 
 Game.Topology = function (domId, data, elemSize)
 {
-    this.xPos = data.xMax();  // TODO: should be zero, but I'm having trouble with negative degree rotation
+    console.log("Topology constructor");
+    this.xPos = data ? data.xMax() : 0;  // TODO: should be zero, but I'm having trouble with negative degree rotation
     this.yPos = 0;
-    this.elemSize = elemSize;
-    this.domElem = document.getElementById(domId);
+    this.elemSize = elemSize || 0;
+    this.domElem = domId ? document.getElementById(domId) : undefined;
 
     this.forEach = function (fn) {
         data.forEach( function (cell) {
@@ -43,42 +44,41 @@ Game.Topology = function (domId, data, elemSize)
         var code = Game.getKeyCode(event);
         switch (code) {
         case 37: //left
-	    that.xSpinBy(-1);
-	    break;
-        case 38: //up
-	    that.ySpinBy(-1);
-	    break;
-        case 39: //right
+            console.log("hit left");
 	    that.xSpinBy(1);
 	    break;
-        case 40: //down
+        case 38: //up
+            console.log("hit up");
 	    that.ySpinBy(1);
 	    break;
+        case 39: //right
+            console.log("hit right");
+	    that.xSpinBy(-1);
+	    break;
+        case 40: //down
+            console.log("hit down");
+	    that.ySpinBy(-1);
+	    break;
+        default:
             return false;
         }
     }
+
     document.onkeydown = handleKeyDown;
+
+    this.xSpinTo = function (xPos, callWhenDone) {};
+    this.ySpinTo = function (yPos, callWhenDone) {};
+
+    this.xSpinBy = function (xDelta, callWhenDone)
+    {
+        this.xSpinTo(this.xPos + xDelta, callWhenDone);
+    }
+
+    this.ySpinBy = function (yDelta, callWhenDone)
+    {
+        this.ySpinTo(this.yPos + yDelta, callWhenDone);
+    }
 };
-
-Game.Topology.prototype.xSpinTo = function (xPos, callWhenDone)
-{
-    console.log("xSpinto:", xPos);
-}
-
-Game.Topology.prototype.ySpinTo = function (yPos, callWhenDone)
-{
-    console.log("ySpinto:", xPos);
-}
-
-Game.Topology.prototype.xSpinBy = function (xDelta, callWhenDone)
-{
-    this.xSpinTo(this.xPos + xDelta, callWhenDone);
-}
-
-Game.Topology.prototype.ySpinBy = function (yDelta, callWhenDone)
-{
-    this.xSpinTo(this.xPos + xDelta, callWhenDone);
-}
 
 
 // ----------------------------------------------------------
@@ -128,7 +128,6 @@ Game.Topology.Cylinder = function (domId, data, elemSize)
     var topologyHalfWidth  = elemSize*data.xMax()/2;
     var topologyHalfHeight = elemSize*data.yMax()/2;
 
-    this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px)");
     var that = this;
     this.forEach(function (elem, x, y) {
         elem.addClassName("cell");
@@ -141,6 +140,18 @@ Game.Topology.Cylinder = function (domId, data, elemSize)
                                       "translateZ("+radius+"px)");
         that.domElem.appendChild(elem);
     });
+
+    this.xSpinTo = function (xPos, callWhenDone)
+    {
+        this.xPos = xPos;
+        console.log("torusX: "+xPos);
+
+        this.domElem.style.webkitTransform = (//"translateZ("+(-xOuterRadius)+"px) "+
+                                              "rotateY("+(-this.xPos*360/data.xMax())+"deg)");
+        if (callWhenDone && (callWhenDone instanceof Function)) {
+	    postAnimationFn = callWhenDone;
+        }
+    }
 };
 
 
@@ -151,6 +162,7 @@ Game.Topology.Cylinder = function (domId, data, elemSize)
 
 Game.Topology.Torus = function (domId, data, elemSize)
 {
+    console.log("Torus constructor");
     this.Inherits(Game.Topology, domId, data, elemSize);
 
     data.xInRange   = function (x) {return true;};
@@ -167,41 +179,81 @@ Game.Topology.Torus = function (domId, data, elemSize)
         return (dist < data.yMax()/2) ? dist : Math.abs(dist - data.yMax());
     }
 
-    var torusRadiusRatio = 0.5;
-
-    var yElemSize = elemSize;
-    var yRadius = (yElemSize/2) / Math.tan(Math.PI/data.yMax())
-    var yElemRot = 2*Math.PI/data.yMax();
-
-    var xOuterElemSize = elemSize;
-    var xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/data.xMax())
-    var xInnerRadius = xOuterRadius - 2*yRadius;
-    var xInnerElemSize = (2 * Math.PI * xInnerRadius) / data.xMax();
-    var xMiddleRadius = xOuterRadius - yRadius;
-    var xElemRot = 2*Math.PI/data.xMax();
-
-    this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px)");
-    for (var x = 0; x < data.xMax(); ++x) {
-        var xTotalRot = x*xElemRot;
-        var slice = document.createElement('div');
-        slice.addClassName("slice");
-        slice.style.webkitTransform = ("rotateY("+xTotalRot+"rad) " +
-                                       "translateX("+(-xOuterElemSize/2)+"px) " +
-                                       "translateZ("+xMiddleRadius+"px)");
-        this.domElem.appendChild(slice);
-        for (var y = 0; y < data.yMax(); ++y) {
-            var yTotalRot = y*yElemRot;
-            var elem = data.cell(x, y).elem;
-            var width = ((xOuterElemSize-xInnerElemSize)/2)*(Math.cos(yTotalRot)+1) + xInnerElemSize;
-            elem.addClassName("cell");
-            elem.innerText = x+","+y;
-            elem.style.height = yElemSize+"px";
-            elem.style.width = width+"px";
-            elem.style.lineHeight = elem.style.height;  // To valign
-            elem.style.webkitTransform = ("rotateX("+yTotalRot+"rad) " +
-                                          "translateX("+(xOuterElemSize-width)/2+"px) " +
-                                          "translateZ("+yRadius+"px)");
-            slice.appendChild(elem);
+    var _slices = new Array(data.xMax());
+    this.init = function ()
+    {
+        var yElemSize = elemSize;
+        for (var x = 0; x < data.xMax(); ++x) {
+            _slices[x] = document.createElement('div');
+            _slices[x].addClassName("slice");
+            this.domElem.appendChild(_slices[x]);
+            for (var y = 0; y < data.yMax(); ++y) {
+                var elem = data.cell(x, y).elem;
+                elem.addClassName("cell");
+                elem.style.height = yElemSize+"px";
+                elem.style.lineHeight = elem.style.height;  // To valign
+                _slices[x].appendChild(elem);
+            }
         }
     }
+
+    var xOuterRadius;
+    this.draw = function ()
+    {
+        console.log(""+this.xPos+" "+this.yPos)
+        var torusRadiusRatio = 0.5;
+
+        var yElemSize = elemSize;
+        var yRadius = (yElemSize/2) / Math.tan(Math.PI/data.yMax())
+        var yElemRot = 2*Math.PI/data.yMax();
+
+        var xOuterElemSize = elemSize;
+        xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/data.xMax())
+        var xInnerRadius = xOuterRadius - 2*yRadius;
+        var xInnerElemSize = (2 * Math.PI * xInnerRadius) / data.xMax();
+        var xMiddleRadius = xOuterRadius - yRadius;
+        var xElemRot = 2*Math.PI/data.xMax();
+
+        this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px)");
+        for (var x = 0; x < data.xMax(); ++x) {
+            var xTotalRot = (x+this.xPos)*xElemRot;
+            var slice = _slices[x];
+            slice.style.webkitTransform = ("rotateY("+xTotalRot+"rad) " +
+                                           "translateX("+(-xOuterElemSize/2)+"px) " +
+                                           "translateZ("+xMiddleRadius+"px)");
+            for (var y = 0; y < data.yMax(); ++y) {
+                var yTotalRot = (y+this.yPos)*yElemRot;
+                var elem = data.cell(x, y).elem;
+                var width = ((xOuterElemSize-xInnerElemSize)/2)*(Math.cos(yTotalRot)+1) + xInnerElemSize;
+                elem.innerText = x+","+y;
+                elem.style.width = width+"px";
+                elem.style.webkitTransform = ("rotateX("+yTotalRot+"rad) " +
+                                              "translateX("+(xOuterElemSize-width)/2+"px) " +
+                                              "translateZ("+yRadius+"px)");
+            }
+        }
+    }
+
+    this.xSpinTo = function (xPos, callWhenDone)
+    {
+        this.xPos = xPos;
+        console.log("torusX: "+xPos);
+
+        this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px) "+
+                                              "rotateY("+(this.xPos*360/data.xMax())+"deg)");
+        if (callWhenDone && (callWhenDone instanceof Function)) {
+	    postAnimationFn = callWhenDone;
+        }
+    }
+
+
+    this.ySpinTo = function (yPos, callWhenDone)
+    {
+        this.yPos = yPos;
+        console.log("torusY: "+yPos);
+        this.draw();        
+    }
+
+    this.init();
+    this.draw();
 };

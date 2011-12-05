@@ -74,6 +74,7 @@ button {
 
 .slice {
     -webkit-transform-style: preserve-3d;
+    -webkit-transition: -webkit-transform 0.5s;
     position: absolute;
 }
 
@@ -90,9 +91,11 @@ button {
     -webkit-animation-iteration-count: 2;
     -webkit-animation-direction: alternate;
     -webkit-animation-timing-function: ease-out;
-    -webkit-transition: -webkit-transform 2s;
     -webkit-backface-visibility: hidden;  // visible;
     -webkit-transform-style: preserve-3d;
+
+    -webkit-transition: -webkit-transform 2s,
+                        width 2s;
 }
 
 .bomb3d-hiddenEven {
