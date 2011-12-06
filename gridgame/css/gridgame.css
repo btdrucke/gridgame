@@ -60,9 +60,13 @@ button {
     -webkit-box-pack: center;
     -webkit-user-select: none;
     -webkit-perspective: 2000;
-    -webkit-perspective-origin: 50% 0%;
+    -webkit-perspective-origin: 50% 50%;
     -webkit-transform: translateY(-20px);
     -webkit-transform-style: preserve-3d;
+}
+
+#stage.torus {
+    -webkit-perspective-origin-y: -25%;
 }
 
 #grid {
@@ -94,8 +98,8 @@ button {
     -webkit-backface-visibility: hidden;  // visible;
     -webkit-transform-style: preserve-3d;
 
-    -webkit-transition: -webkit-transform 2s,
-                        width 2s;
+    -webkit-transition: -webkit-transform .5s,
+                        width .5s;
 }
 
 .bomb3d-hiddenEven {

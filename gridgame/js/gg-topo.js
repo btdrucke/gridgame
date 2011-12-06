@@ -4,16 +4,21 @@ window.Game = window.Game || {};  // namespace
 // Game.Topology: Base class for rendering game grids
 // -------------------------------------------------
 
-Game.Topology = function (domId, data, elemSize)
+Game.Topology = function (xSize, ySize, domId)
 {
     console.log("Topology constructor");
-    this.xPos = data ? data.xMax() : 0;  // TODO: should be zero, but I'm having trouble with negative degree rotation
+
+    this.xSize = xSize;
+    this.ySize = ySize;
+    this.data = new Game.Data(this.xSize, this.ySize);
+
+    this.xPos = this.data.xMax();  // TODO: should be zero, but I'm having trouble with negative degree rotation
     this.yPos = 0;
-    this.elemSize = elemSize || 0;
-    this.domElem = domId ? document.getElementById(domId) : undefined;
+    this.elemSize = 50;
+    this.domElem = document.getElementById(domId);
 
     this.forEach = function (fn) {
-        data.forEach( function (cell) {
+        this.data.forEach( function (cell) {
             fn(cell.elem, cell.x(), cell.y());
         });
     };
@@ -45,7 +50,7 @@ Game.Topology = function (domId, data, elemSize)
         switch (code) {
         case 37: //left
             console.log("hit left");
-	    that.xSpinBy(1);
+	    that.xSpinBy(-1);
 	    break;
         case 38: //up
             console.log("hit up");
@@ -53,7 +58,7 @@ Game.Topology = function (domId, data, elemSize)
 	    break;
         case 39: //right
             console.log("hit right");
-	    that.xSpinBy(-1);
+	    that.xSpinBy(1);
 	    break;
         case 40: //down
             console.log("hit down");
@@ -85,20 +90,23 @@ Game.Topology = function (domId, data, elemSize)
 // Game.Topology.Plane: Renders game grids as a flat rectangle
 // ----------------------------------------------------------
 
-Game.Topology.Plane = function (domId, data, elemSize)
+Game.Topology.Plane = function (xSize, ySize, domId)
 {
-    this.Inherits(Game.Topology, domId, data, elemSize);
+    var domIdDefault = "grid";
+    var xSizeDefault = 10;
+    var ySizeDefault = 10;
+    this.Inherits(Game.Topology, xSize || xSizeDefault, ySize || ySizeDefault, domId || domIdDefault);
 
-    var topologyHalfWidth  = elemSize*data.xMax()/2;
-    var topologyHalfHeight = elemSize*data.yMax()/2;
+    var topologyHalfWidth  = this.elemSize*this.data.xMax()/2;
+    var topologyHalfHeight = this.elemSize*this.data.yMax()/2;
     var that = this;
     this.forEach(function (elem, x, y) {
         elem.addClassName("cell");
         //elem.innerText = x+","+y;
-        elem.style.top  = elemSize*y-topologyHalfHeight + "px";
-        elem.style.left = elemSize*x-topologyHalfWidth + "px";
-        elem.style.width  = elemSize + "px";
-        elem.style.height = elemSize + "px";
+        elem.style.top  = that.elemSize*y-topologyHalfHeight + "px";
+        elem.style.left = that.elemSize*x-topologyHalfWidth + "px";
+        elem.style.width  = that.elemSize + "px";
+        elem.style.height = that.elemSize + "px";
         elem.style.lineHeight = elem.style.height;  // To valign
         that.domElem.appendChild(elem);
     });
@@ -110,23 +118,26 @@ Game.Topology.Plane = function (domId, data, elemSize)
 //   Wraps around in the X direction.
 // --------------------------------------------------------
 
-Game.Topology.Cylinder = function (domId, data, elemSize)
+Game.Topology.Cylinder = function (xSize, ySize, domId)
 {
-    this.Inherits(Game.Topology, domId, data, elemSize);
+    var domIdDefault = "grid";
+    var xSizeDefault = 36;
+    var ySizeDefault = 10;
+    this.Inherits(Game.Topology, xSize || xSizeDefault, ySize || ySizeDefault, domId || domIdDefault)  ;
 
-    data.xInRange   = function (x) {return true;};
-    data.xNormalize = function (x) {return Game.normalizeGridIndex(x, data.xMax());}
-    data.xDistanace = function (x1, x2) {
+    this.data.xInRange   = function (x) {return true;};
+    this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.data.xMax());}
+    this.data.xDistanace = function (x1, x2) {
         var dist = Math.abs(x1 - x2);
         return (dist < xMax/2) ? dist : Math.abs(dist - xMax);
     }
 
-    var xElemSize = elemSize;
-    var yElemSize = elemSize;
-    var radius = (xElemSize/2) / Math.tan(Math.PI/data.xMax())
-    var xElemRot = 2*Math.PI / data.xMax();
-    var topologyHalfWidth  = elemSize*data.xMax()/2;
-    var topologyHalfHeight = elemSize*data.yMax()/2;
+    var xElemSize = this.elemSize;
+    var yElemSize = this.elemSize;
+    var radius = (xElemSize/2) / Math.tan(Math.PI/this.data.xMax())
+    var xElemRot = 2*Math.PI / this.data.xMax();
+    var topologyHalfWidth  = this.elemSize*this.data.xMax()/2;
+    var topologyHalfHeight = this.elemSize*this.data.yMax()/2;
 
     var that = this;
     this.forEach(function (elem, x, y) {
@@ -147,7 +158,7 @@ Game.Topology.Cylinder = function (domId, data, elemSize)
         console.log("torusX: "+xPos);
 
         this.domElem.style.webkitTransform = (//"translateZ("+(-xOuterRadius)+"px) "+
-                                              "rotateY("+(-this.xPos*360/data.xMax())+"deg)");
+                                              "rotateY("+(this.xPos*360/this.data.xMax())+"deg)");
         if (callWhenDone && (callWhenDone instanceof Function)) {
 	    postAnimationFn = callWhenDone;
         }
@@ -160,35 +171,40 @@ Game.Topology.Cylinder = function (domId, data, elemSize)
 //   Wraps around in the X and Y directions.
 // --------------------------------------------------
 
-Game.Topology.Torus = function (domId, data, elemSize)
+    Game.Topology.Torus = function (xSize, ySize, domId)
 {
-    console.log("Torus constructor");
-    this.Inherits(Game.Topology, domId, data, elemSize);
+    var domIdDefault = "grid";
+    var xSizeDefault = 36;
+    var ySizeDefault = 10;
+    this.Inherits(Game.Topology, xSize || xSizeDefault, ySize || ySizeDefault, domId || domIdDefault);
 
-    data.xInRange   = function (x) {return true;};
-    data.xNormalize = function (x) {return Game.normalizeGridIndex(x, data.xMax());}
-    data.xDistanace = function (x1, x2) {
+    this.data.xInRange   = function (x) {return true;};
+    this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.xMax());}
+    this.data.xDistanace = function (x1, x2) {
         var dist = Math.abs(x1 - x2);
-        return (dist < data.xMax()/2) ? dist : Math.abs(dist - data.xMax());
+        return (dist < this.xMax()/2) ? dist : Math.abs(dist - this.xMax());
     }
 
-    data.yInRange   = function (y) {return true;};
-    data.yNormalize = function (y) {return Game.normalizeGridIndex(y, data.yMax());}
-    data.yDistanace = function (y1, y2) {
+    this.data.yInRange   = function (y) {return true;};
+    this.data.yNormalize = function (y) {return Game.normalizeGridIndex(y, this.yMax());}
+    this.data.yDistanace = function (y1, y2) {
         var dist = Math.abs(y1 - y2);
-        return (dist < data.yMax()/2) ? dist : Math.abs(dist - data.yMax());
+        return (dist < this.yMax()/2) ? dist : Math.abs(dist - this.yMax());
     }
 
-    var _slices = new Array(data.xMax());
+    var _slices = new Array(this.data.xMax());
     this.init = function ()
     {
-        var yElemSize = elemSize;
-        for (var x = 0; x < data.xMax(); ++x) {
+        var stage = document.getElementById("stage");
+        stage.addClassName("torus");
+
+        var yElemSize = this.elemSize;
+        for (var x = 0; x < this.data.xMax(); ++x) {
             _slices[x] = document.createElement('div');
             _slices[x].addClassName("slice");
             this.domElem.appendChild(_slices[x]);
-            for (var y = 0; y < data.yMax(); ++y) {
-                var elem = data.cell(x, y).elem;
+            for (var y = 0; y < this.data.yMax(); ++y) {
+                var elem = this.data.cell(x, y).elem;
                 elem.addClassName("cell");
                 elem.style.height = yElemSize+"px";
                 elem.style.lineHeight = elem.style.height;  // To valign
@@ -203,27 +219,29 @@ Game.Topology.Torus = function (domId, data, elemSize)
         console.log(""+this.xPos+" "+this.yPos)
         var torusRadiusRatio = 0.5;
 
-        var yElemSize = elemSize;
-        var yRadius = (yElemSize/2) / Math.tan(Math.PI/data.yMax())
-        var yElemRot = 2*Math.PI/data.yMax();
+        var yElemSize = this.elemSize;
+        var yRadius = (yElemSize/2) / Math.tan(Math.PI/this.data.yMax())
+        var yElemRot = 2*Math.PI/this.data.yMax();
 
-        var xOuterElemSize = elemSize;
-        xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/data.xMax())
+        var xOuterElemSize = this.elemSize;
+        xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/this.data.xMax())
         var xInnerRadius = xOuterRadius - 2*yRadius;
-        var xInnerElemSize = (2 * Math.PI * xInnerRadius) / data.xMax();
+        var xInnerElemSize = (2 * Math.PI * xInnerRadius) / this.data.xMax();
         var xMiddleRadius = xOuterRadius - yRadius;
-        var xElemRot = 2*Math.PI/data.xMax();
+        var xElemRot = 2*Math.PI/this.data.xMax();
 
-        this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px)");
-        for (var x = 0; x < data.xMax(); ++x) {
+        //this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px)");
+        this.domElem.style.webkitTransform = ("translateZ("+(200)+"px)");
+        for (var x = 0; x < this.data.xMax(); ++x) {
             var xTotalRot = (x+this.xPos)*xElemRot;
             var slice = _slices[x];
             slice.style.webkitTransform = ("rotateY("+xTotalRot+"rad) " +
                                            "translateX("+(-xOuterElemSize/2)+"px) " +
+                                           "translateY("+(- yRadius)+"px) " +
                                            "translateZ("+xMiddleRadius+"px)");
-            for (var y = 0; y < data.yMax(); ++y) {
+            for (var y = 0; y < this.data.yMax(); ++y) {
                 var yTotalRot = (y+this.yPos)*yElemRot;
-                var elem = data.cell(x, y).elem;
+                var elem = this.data.cell(x, y).elem;
                 var width = ((xOuterElemSize-xInnerElemSize)/2)*(Math.cos(yTotalRot)+1) + xInnerElemSize;
                 elem.innerText = x+","+y;
                 elem.style.width = width+"px";
@@ -239,11 +257,16 @@ Game.Topology.Torus = function (domId, data, elemSize)
         this.xPos = xPos;
         console.log("torusX: "+xPos);
 
-        this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px) "+
-                                              "rotateY("+(this.xPos*360/data.xMax())+"deg)");
+        this.draw();
+        /*
+        var xElemRot = 2*Math.PI/this.data.xMax();
+        var xTotalRot = (this.xPos) * xElemRot;
+        this.domElem.style.webkitTransform = (//"translateZ("+(-xOuterRadius)+"px) "+
+                                              "rotateY(" + xTotalRot + "rad)");
         if (callWhenDone && (callWhenDone instanceof Function)) {
 	    postAnimationFn = callWhenDone;
         }
+        */
     }
 
 
