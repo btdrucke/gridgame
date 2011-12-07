@@ -19,34 +19,6 @@ Function.prototype.Inherits = function( parent )
 }
 
 
-// --------------------------------
-// ClassName manipulation functions
-// --------------------------------
-
-HTMLElement.prototype.hasClassName = function (name) 
-{
-    var re = new RegExp('\\b' + name + '\\b');
-    return re.test(this.className);
-}
-
-HTMLElement.prototype.addClassName = function (name)
-{
-    for(var i = 0; i < arguments.length; ++i) {
-        var arg = arguments[i];
-        if (!this.hasClassName(arg)) {
-            this.className += " " + arg;
-        }
-    }
-}
-
-HTMLElement.prototype.removeClassName = function (name)
-{
-    for(var i = 0; i < arguments.length; ++i) {
-        var re = new RegExp('\\b' + arguments[i] + '\\b', 'g');
-        this.className = this.className.replace(re, '');
-    }
-}
-
 // -------------------------------
 // Game namespace helper functions
 // -------------------------------

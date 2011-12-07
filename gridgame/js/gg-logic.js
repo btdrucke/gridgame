@@ -4,8 +4,9 @@ window.Game = window.Game || {};  // namespace
 // Game.Logic: Base class for game logic
 // -------------------------------------
 
-Game.Logic = function (data, topology)
+Game.Logic = function (topology)
 {
+    this.topology = topology;
 };
 
 
@@ -13,11 +14,10 @@ Game.Logic = function (data, topology)
 // Game.Logic.Bomb3d : minesweeper game logic
 // ------------------------------------------
 
-Game.Logic.Bomb3d = function (inData, topology)
+Game.Logic.Bomb3d = function (topology)
 {
-    this.Inherits(Game.Logic, inData, topology);
+    this.Inherits(Game.Logic, topology);
 
-    this.data = inData;
     this.floodStack = [];
     this.showQueue = [];
     this.cellsToShow = 0;
@@ -26,10 +26,12 @@ Game.Logic.Bomb3d = function (inData, topology)
     this.showTimerDelay = 10;
 
     // Add Bomb3d-specific state and logic to DataCell
-    Game.DataCell.prototype.hasBomb = function () {return (this.bomb3d.state.count > 8);};
+    Game.DataCell.prototype.hasBomb = function () {
+        return (this.bomb3d.state.count > 8);
+    };
 
     this.reset();
-    topology.forEach(function (elem, x, y) {
+    this.topology.forEach(function (elem, x, y) {
         //elem.addEventListener("click",     new Function('Game.Logic.Bomb.doFloodFill('+x+', '+y+');'), false);
         //elem.addEventListener("mouseover", new Function('Game.Logic.Bomb.enterCell('+x+', '+y+');'), false);
         //elem.addEventListener("mouseout",  new Function('Game.Logic.Bomb.leaveCell('+x+', '+y+');'), false);
@@ -39,16 +41,16 @@ Game.Logic.Bomb3d = function (inData, topology)
 
 Game.Logic.Bomb3d.prototype.reset = function () 
 {
-    this.data.forEach(function (cell) {
+    this.topology.data.forEach(function (cell) {
         cell.count = 0;
         cell.shown = false;
         cell.hasFlag = false;
-        cell.elem.removeClassName("bomb3d-flagChoice",    // TODO: namespace these class names
+        cell.elem.classList.remove("bomb3d-flagChoice",    // TODO: namespace these class names
                                   "bomb3d-hasFlag",
                                   "bomb3d-hasBomb",
                                   "bomb3d-flagChoice",
                                   "bomb3d-exploded");
-        cell.elem.addClassName((cell.x() + cell.y())%2 ? "bomb3d-hiddenEven" : "bomb3d-hiddenOdd");
+        cell.elem.classList.add((cell.x() + cell.y())%2 ? "bomb3d-hiddenEven" : "bomb3d-hiddenOdd");
     });
     
     this.floodStack = [];
@@ -70,7 +72,7 @@ Game.Logic.Bomb3d.prototype.queueShow = function (cell)
 
 Game.Logic.Bomb3d.prototype.showAll = function (startingCell)
 {
-    this.data.forEach(function (cell) {
+    this.topology.data.forEach(function (cell) {
         this.queueShow(cell);
     });
     this.doShow(x,y);

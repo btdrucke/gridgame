@@ -41,8 +41,6 @@ Game.Topology = function (xSize, ySize, domId)
     var _keyUpMap = {};
     var _keyDownMap = {};
 
-    _keyUpMap
-
     var that = this;
     function handleKeyDown (event)
     {
@@ -51,21 +49,24 @@ Game.Topology = function (xSize, ySize, domId)
         case 37: //left
             console.log("hit left");
 	    that.xSpinBy(-1);
+            return false;
 	    break;
         case 38: //up
             console.log("hit up");
 	    that.ySpinBy(1);
+            return false;
 	    break;
         case 39: //right
             console.log("hit right");
 	    that.xSpinBy(1);
+            return false;
 	    break;
         case 40: //down
             console.log("hit down");
 	    that.ySpinBy(-1);
+            return false;
 	    break;
         default:
-            return false;
         }
     }
 
@@ -101,7 +102,7 @@ Game.Topology.Plane = function (xSize, ySize, domId)
     var topologyHalfHeight = this.elemSize*this.data.yMax()/2;
     var that = this;
     this.forEach(function (elem, x, y) {
-        elem.addClassName("cell");
+        elem.classList.add("cell");
         //elem.innerText = x+","+y;
         elem.style.top  = that.elemSize*y-topologyHalfHeight + "px";
         elem.style.left = that.elemSize*x-topologyHalfWidth + "px";
@@ -141,7 +142,7 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
 
     var that = this;
     this.forEach(function (elem, x, y) {
-        elem.addClassName("cell");
+        elem.classList.add("cell");
         var xTotalRot = x*xElemRot;
         //elem.innerText = x+","+y;
         elem.style.height = yElemSize + "px";
@@ -196,19 +197,20 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
     this.init = function ()
     {
         var stage = document.getElementById("stage");
-        stage.addClassName("torus");
+        stage.classList.add("torus");
 
         var yElemSize = this.elemSize;
         for (var x = 0; x < this.data.xMax(); ++x) {
-            _slices[x] = document.createElement('div');
-            _slices[x].addClassName("slice");
+            var slice = document.createElement('div');
+            _slices[x] = slice;
+            slice.classList.add("slice");
             this.domElem.appendChild(_slices[x]);
             for (var y = 0; y < this.data.yMax(); ++y) {
                 var elem = this.data.cell(x, y).elem;
-                elem.addClassName("cell");
+                elem.classList.add("cell");
                 elem.style.height = yElemSize+"px";
                 elem.style.lineHeight = elem.style.height;  // To valign
-                _slices[x].appendChild(elem);
+                slice.appendChild(elem);
             }
         }
     }
