@@ -167,11 +167,9 @@ Game.Logic.Bomb = function (topology)
 
     function _placeBombs (xSafe, ySafe) 
     {
-        var xMax = this.data.xMax();
-        var yMax = this.data.yMax();
         while (_bombsToCreate) {
-            var xBomb = Math.floor(Math.random()*xMax);
-            var yBomb = Math.floor(Math.random()*yMax);
+            var xBomb = Math.floor(Math.random()*_xMax);
+            var yBomb = Math.floor(Math.random()*_yMax);
 	    if ((xBomb === xSafe) && (yBomb === ySafe)) {
 	        continue;
 	    }
@@ -235,16 +233,46 @@ Game.Logic.Bomb = function (topology)
         _explodeSound.play();
     }
 
+    this.doHint = function ()
+    {
+        if (_bombsToCreate) {
+	    _placeBombs.bind(this)();
+        }
+
+        if (!_cellsToShow) {
+            return;
+        }
+
+        var xHint, yHint, cell;
+        do {
+            xHint = Math.floor(Math.random()*_xMax);
+            yHint = Math.floor(Math.random()*_yMax);
+            cell = this.data.cell(xHint, yHint);
+        }
+        while (cell.shown || cell.hasBomb());
+
+        var topo = this.topology;
+        topo.setMessage("Hint: ("+xHint+"x"+yHint+")");
+	topo.spinTo(xHint, yHint, function() {
+	    this.floodFill(xHint, yHint);
+	    cell.elem.style.webkitAnimationName = "bomb-hintPulse";
+	});
+    }
+
+
     // ------------
     // private data
 
-    var _floodStack = [];
-    var _showQueue = [];
-    var _showTimerId = undefined;
-    var _showTimerDelay = 10;
-    var _numCells = this.data.xMax() * this.data.yMax();
+
+    var _numCells = this.data.numCells();
+    var _xMax = this.data.xMax();
+    var _yMax = this.data.yMax();
+    var _showTimerId;
+    var _showTimerDelay = Math.min(10, 5000 / _numCells);
     var _bombsToCreate = Math.max(Math.round(_numCells * this.bombRatio), 1);
     var _cellsToShow = _numCells - _bombsToCreate;
+    var _floodStack = [];
+    var _showQueue = [];
     var _clickSound, _explodeSound;
 
     // ----------------

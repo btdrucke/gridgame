@@ -154,7 +154,7 @@ button {
     background-color: rgb(120,181,210);
 }
 
-@-webkit-keyframes hintPulse {
+@-webkit-keyframes bomb-hintPulse {
     0%,100% {z-index:999; -webkit-box-shadow: inset 0 0 0px 0px #f00;}
     50% {z-index:999; -webkit-box-shadow: inset 0 0 5px 5px #f00;}
 }

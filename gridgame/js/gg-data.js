@@ -14,15 +14,15 @@ Game.DataCell = function (inX, inY, inParent)
     this.y = function () {return _y;}
 
     this.neighbor = function (xDelta, yDelta) {
-        return _parent.cell(_x + xDelta, _y + yDelta);
+        return _parent.cell(_x + xDelta, _y + yDelta);  // TODO: needs bind()?
     };
 
     this.xDistance = function (other) {
-        return _parent.xDistance(this._x, other._x);
+        return _parent.xDistance(this.x(), other.x());
     };
 
     this.yDistance = function (other) {
-        return _parent.yDistance(this._y, other._y);
+        return _parent.yDistance(this.y(), other.y());
     };
 
     this.distanceSqr = function (other)  {
@@ -47,6 +47,9 @@ Game.Data = function (inXMax, inYMax)
 
     this.xMax = function () {return _xMax;}
     this.yMax = function () {return _yMax;}
+    this.numCells = function () {
+        return _xMax * _yMax;
+    }
 
     this.xInRange = function (x) {
         return (x>=0) && (x < _xMax);

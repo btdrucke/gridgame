@@ -294,14 +294,14 @@ Game.Topology.Torus = function (xSize, ySize, domId)
 
     this.data.xInRange   = function (x) {return true;};
     this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.xMax());}
-    this.data.xDistanace = function (x1, x2) {
+    this.data.xDistance = function (x1, x2) {
         var dist = Math.abs(x1 - x2);
         return (dist < this.xMax()/2) ? dist : Math.abs(dist - this.xMax());
     }
 
     this.data.yInRange   = function (y) {return true;};
     this.data.yNormalize = function (y) {return Game.normalizeGridIndex(y, this.yMax());}
-    this.data.yDistanace = function (y1, y2) {
+    this.data.yDistance = function (y1, y2) {
         var dist = Math.abs(y1 - y2);
         return (dist < this.yMax()/2) ? dist : Math.abs(dist - this.yMax());
     }
