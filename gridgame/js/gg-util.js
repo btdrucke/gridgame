@@ -41,3 +41,28 @@ Game.getKeyCode = function (event)
     }
     return keycode;    
 }
+
+Game.clickCoordsWithinElement = function (event) 
+{
+    var coords = {x: 0, y: 0};
+    if (!event) {
+        event = window.event;
+        coords.x = event.x;
+        coords.y = event.y;
+    } else {
+        var element = event.target ;
+        var totalOffsetLeft = 0;
+        var totalOffsetTop = 0 ;
+
+        while (element.offsetParent)
+        {
+            totalOffsetLeft += element.offsetLeft;
+            totalOffsetTop += element.offsetTop;
+            element = element.offsetParent;
+        }
+        coords.x = event.pageX - totalOffsetLeft;
+        coords.y = event.pageY - totalOffsetTop;
+    }
+    return coords;
+}
+

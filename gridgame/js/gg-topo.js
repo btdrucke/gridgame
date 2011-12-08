@@ -12,7 +12,7 @@ Game.Topology = function (xSize, ySize, domId)
     this.ySize = ySize;
     this.data = new Game.Data(this.xSize, this.ySize);
 
-    this.xPos = this.data.xMax();  // TODO: should be zero, but I'm having trouble with negative degree rotation
+    this.xPos = 0;
     this.yPos = 0;
     this.elemSize = 50;
     this.domElem = document.getElementById(domId);
@@ -38,39 +38,6 @@ Game.Topology = function (xSize, ySize, domId)
         }
     }
 
-    var _keyUpMap = {};
-    var _keyDownMap = {};
-
-    var that = this;
-    function handleKeyDown (event)
-    {
-        var code = Game.getKeyCode(event);
-        switch (code) {
-        case 37: //left
-            console.log("hit left");
-	    that.xSpinBy(-1);
-            return false;
-	    break;
-        case 38: //up
-            console.log("hit up");
-	    that.ySpinBy(1);
-            return false;
-	    break;
-        case 39: //right
-            console.log("hit right");
-	    that.xSpinBy(1);
-            return false;
-	    break;
-        case 40: //down
-            console.log("hit down");
-	    that.ySpinBy(-1);
-            return false;
-	    break;
-        default:
-        }
-    }
-
-    document.onkeydown = handleKeyDown;
 
     this.xSpinTo = function (xPos, callWhenDone) {};
     this.ySpinTo = function (yPos, callWhenDone) {};
@@ -84,6 +51,132 @@ Game.Topology = function (xSize, ySize, domId)
     {
         this.ySpinTo(this.yPos + yDelta, callWhenDone);
     }
+
+
+    var _keyUpMap = {};
+    var _keyDownMap = {};
+
+    function _handleKeyDown (event)
+    {
+        var code = Game.getKeyCode(event);
+        switch (code) {
+        case 37: //left
+            console.log("hit left");
+	    this.xSpinBy(-1);
+            return false;
+	    break;
+        case 38: //up
+            console.log("hit up");
+	    this.ySpinBy(1);
+            return false;
+	    break;
+        case 39: //right
+            console.log("hit right");
+	    this.xSpinBy(1);
+            return false;
+	    break;
+        case 40: //down
+            console.log("hit down");
+	    this.ySpinBy(-1);
+            return false;
+	    break;
+        default:
+        }
+    }
+
+    var _pressed = false;
+    var _xDragging = false, _yDragging = false;
+    var _firstX = 0, _lastX = 0, _lastXDelta = 0, _totalXDelta = 0, _firstXPos = 0;
+    var _firstY = 0, _lastY = 0, _lastYDelta = 0, _totalYDelta = 0, _firstYPos = 0;
+    var _lastTime;
+
+    function _mouseDown (event) 
+    {
+        if (!_pressed) {
+	    var coords = Game.clickCoordsWithinElement(event);
+	    _firstXPos = this.xPos;
+	    _firstX = _lastX = coords.x;
+
+	    _firstYPos = this.yPos;
+	    _firstY = _lastY = coords.y
+
+	    _lastTime = new Date();
+	    _pressed = true;
+	    _xDragging = _yDragging = false;
+        }
+    }
+
+
+    function _mouseUp (event) 
+    {
+        if (_pressed) {
+            _pressed = false;
+	    if (_xDragging) {
+	        if (Math.abs(_lastXRate) > 0.05) {
+                    var data = this.topology.data;
+		    console.log("flick X:" + _lastXRate);
+		    //var xSpinBy = -Math.max(data.xMax()-1, _lastXRate * 20);
+		    var xSpinBy = -(_lastXRate * 20);
+		    this.xSpinTo(data.xPos + xSpinBy);
+	        }
+	        _xDragging = false;
+            }
+	    if (_yDragging) {
+	        if (Math.abs(_lastYRate) > 0.05) {
+                    var data = this.topology.data;
+		    console.log("flick Y:" + _lastYRate);
+		    var ySpinBy = Math.max(data.yMax()/2, _lastYRate * 2);
+		    this.ySpinTo(data.yPos + ySpinBy);
+	        }
+	        _yDragging = false;
+	    }
+	    else {
+	    }
+        }
+    }
+
+
+    function _mouseMove (event) 
+    {
+        if (_pressed) {
+	    var coords = Game.clickCoordsWithinElement(event);
+	    var thisTime = new Date();
+	    var timeDelta = thisTime - _lastTime;
+
+            var xDelta = coords.x - _lastX;
+	    var totalXDelta = coords.x - _firstX;
+	    if (Math.abs(totalXDelta) > 4) {
+	        var xSpinBy = -totalXDelta / 30;
+	        this.xSpinTo(_firstXPos - xSpinBy);
+	    }
+	    // fuzzy factor to determine drag versus sloppy click
+            if (Math.abs(xDelta) > 4) {  
+                _xDragging = true;
+	        _lastXRate = xDelta/timeDelta;
+	        console.log("dragging: " + _lastX, coords.x, xDelta, _lastTime, _lastXRate);
+                _lastX = coords.x;
+            }
+
+            var yDelta = coords.y - _lastY;
+	    var totalYDelta = coords.y - _firstY;
+	    if (Math.abs(totalYDelta) > 4) {
+	        var ySpinBy = totalYDelta / 30;
+	        this.ySpinTo(_firstYPos - ySpinBy);
+	    }
+	    // fuzzy factor to determine drag versus sloppy click
+            if (Math.abs(yDelta) > 4) {  
+                _yDragging = true;
+	        _lastYRate = yDelta/timeDelta;
+	        console.log("dragging Y: " + _lastY, coords.y, yDelta, _lastTime, _lastXRate);
+                _lastY = coords.y;
+            }
+        }
+    }
+
+    document.onkeydown = _handleKeyDown.bind(this);
+    document.addEventListener('mousedown', _mouseDown.bind(this), false);
+    document.addEventListener('mousemove', _mouseMove.bind(this), false);
+    document.addEventListener('mouseup',   _mouseUp.bind(this),   false);
 };
 
 
@@ -172,7 +265,7 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
 //   Wraps around in the X and Y directions.
 // --------------------------------------------------
 
-    Game.Topology.Torus = function (xSize, ySize, domId)
+Game.Topology.Torus = function (xSize, ySize, domId)
 {
     var domIdDefault = "grid";
     var xSizeDefault = 36;
@@ -194,7 +287,7 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
     }
 
     var _slices = new Array(this.data.xMax());
-    this.init = function ()
+    function _init ()
     {
         var stage = document.getElementById("stage");
         stage.classList.add("torus");
@@ -215,8 +308,8 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
         }
     }
 
-    var xOuterRadius;
-    this.draw = function ()
+    var _xOuterRadius;
+    function _draw ()
     {
         console.log(""+this.xPos+" "+this.yPos)
         var torusRadiusRatio = 0.5;
@@ -226,13 +319,13 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
         var yElemRot = 2*Math.PI/this.data.yMax();
 
         var xOuterElemSize = this.elemSize;
-        xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/this.data.xMax())
-        var xInnerRadius = xOuterRadius - 2*yRadius;
+        _xOuterRadius = (xOuterElemSize/2) / Math.tan(Math.PI/this.data.xMax())
+        var xInnerRadius = _xOuterRadius - 2*yRadius;
         var xInnerElemSize = (2 * Math.PI * xInnerRadius) / this.data.xMax();
-        var xMiddleRadius = xOuterRadius - yRadius;
+        var xMiddleRadius = _xOuterRadius - yRadius;
         var xElemRot = 2*Math.PI/this.data.xMax();
 
-        //this.domElem.style.webkitTransform = ("translateZ("+(-xOuterRadius)+"px)");
+        //this.domElem.style.webkitTransform = ("translateZ("+(-_xOuterRadius)+"px)");
         this.domElem.style.webkitTransform = ("translateZ("+(200)+"px)");
         for (var x = 0; x < this.data.xMax(); ++x) {
             var xTotalRot = (x+this.xPos)*xElemRot;
@@ -259,11 +352,11 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
         this.xPos = xPos;
         console.log("torusX: "+xPos);
 
-        this.draw();
+        _draw.bind(this)();
         /*
         var xElemRot = 2*Math.PI/this.data.xMax();
         var xTotalRot = (this.xPos) * xElemRot;
-        this.domElem.style.webkitTransform = (//"translateZ("+(-xOuterRadius)+"px) "+
+        this.domElem.style.webkitTransform = (//"translateZ("+(-_xOuterRadius)+"px) "+
                                               "rotateY(" + xTotalRot + "rad)");
         if (callWhenDone && (callWhenDone instanceof Function)) {
 	    postAnimationFn = callWhenDone;
@@ -276,9 +369,9 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
     {
         this.yPos = yPos;
         console.log("torusY: "+yPos);
-        this.draw();        
+        _draw.bind(this)();
     }
-
-    this.init();
-    this.draw();
+    
+    _init.bind(this)();
+    _draw.bind(this)();
 };
