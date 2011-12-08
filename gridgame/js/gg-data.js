@@ -13,16 +13,24 @@ Game.DataCell = function (inX, inY, inParent)
     this.x = function () {return _x;}
     this.y = function () {return _y;}
 
-    this.neighbor = function(xDelta, yDelta) {
+    this.neighbor = function (xDelta, yDelta) {
         return _parent.cell(_x + xDelta, _y + yDelta);
     };
 
-    this.xDistance = function(otherCell) {
-        return _parent.xDistance(this._x, otherCell._x);
+    this.xDistance = function (other) {
+        return _parent.xDistance(this._x, other._x);
     };
 
-    this.yDistance = function(otherCell) {
-        return _parent.yDistance(this._y, otherCell._y);
+    this.yDistance = function (other) {
+        return _parent.yDistance(this._y, other._y);
+    };
+
+    this.distanceSqr = function (other)  {
+        return Math.pow(this.xDistance(other),2) + Math.pow(this.yDistance(other),2);
+    };
+
+    this.distance = function (other)  {
+        return Math.sqrt(this.distanceSqr(other));
     };
 
     // private

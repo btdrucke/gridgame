@@ -23,6 +23,12 @@ Game.Topology = function (xSize, ySize, domId)
         });
     };
 
+    this.setMessage = function (msg)
+    {
+        var msgElem = document.getElementById('message');
+        msgElem.innerText = msg;
+    }
+
     this.registerKey = function (keyCode, downHandler, upHandler) {
         if (downHandler && upHandler) {
             _keyDownMap[keyCode] = downHandler;
@@ -39,17 +45,27 @@ Game.Topology = function (xSize, ySize, domId)
     }
 
 
-    this.xSpinTo = function (xPos, callWhenDone) {};
-    this.ySpinTo = function (yPos, callWhenDone) {};
+    this.xSpinTo = function (xPos, callWhenDone) {        
+        return this;
+    };
+
+    this.ySpinTo = function (yPos, callWhenDone) {
+        return this;
+    };
+
+    this.spinTo = function (xPos, yPos, callWhenDone)
+    {
+        return this.xSpinTo(xPos).ySpinTo(yPos, callWhenDone);
+    }
 
     this.xSpinBy = function (xDelta, callWhenDone)
     {
-        this.xSpinTo(this.xPos + xDelta, callWhenDone);
+        return this.xSpinTo(this.xPos + xDelta, callWhenDone);
     }
 
     this.ySpinBy = function (yDelta, callWhenDone)
     {
-        this.ySpinTo(this.yPos + yDelta, callWhenDone);
+        return this.ySpinTo(this.yPos + yDelta, callWhenDone);
     }
 
 
@@ -173,6 +189,9 @@ Game.Topology = function (xSize, ySize, domId)
         }
     }
 
+    // -----------
+    // constructor
+
     document.onkeydown = _handleKeyDown.bind(this);
     document.addEventListener('mousedown', _mouseDown.bind(this), false);
     document.addEventListener('mousemove', _mouseMove.bind(this), false);
@@ -256,6 +275,7 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
         if (callWhenDone && (callWhenDone instanceof Function)) {
 	    postAnimationFn = callWhenDone;
         }
+        return this;
     }
 };
 
@@ -353,6 +373,7 @@ Game.Topology.Torus = function (xSize, ySize, domId)
         console.log("torusX: "+xPos);
 
         _draw.bind(this)();
+        return this;
         /*
         var xElemRot = 2*Math.PI/this.data.xMax();
         var xTotalRot = (this.xPos) * xElemRot;
@@ -370,6 +391,7 @@ Game.Topology.Torus = function (xSize, ySize, domId)
         this.yPos = yPos;
         console.log("torusY: "+yPos);
         _draw.bind(this)();
+        return this;
     }
     
     _init.bind(this)();

@@ -66,7 +66,7 @@ button {
 }
 
 #stage.torus {
-    -webkit-perspective-origin-y: -25%;
+    -webkit-perspective-origin-y: -50%;
 }
 
 #grid {
@@ -83,36 +83,51 @@ button {
 }
 
 .cell {
-    border: 1px solid black;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(0,0,0,0);
+    display: table-cell;
+    position: absolute;
     padding: 0px;
     text-align: center;
-    font-size: 12pt;
-    color: black;
-    display: table-cell;
     vertical-align: middle;
-    position: absolute;
     -webkit-animation-duration: 1s;
     -webkit-animation-iteration-count: 2;
     -webkit-animation-direction: alternate;
     -webkit-animation-timing-function: ease-out;
-    -webkit-backface-visibility: hidden;  // visible;
+    -webkit-backface-visibility: visible;
     -webkit-transform-style: preserve-3d;
 
     -webkit-transition: -webkit-transform .5s,
-                        width .5s;
+                        width .5s,
+                        background-color 1s,
+                        background-image 1s,
+                        border-color 1s;
 }
 
-.bomb3d-hiddenEven {
+.bomb-cell {
+    border: 1px solid black;
+    font-size: 12pt;
+    color: black;
+    -webkit-backface-visibility: hidden;
+
+    -webkit-transition: -webkit-transform .5s,
+                        width .5s,
+                        background-color .1s,
+                        background-image .1s,
+                        border-color .1s;
+}
+
+.bomb-hiddenEven {
     background-color: #b0b0b0;
 }
 
-.bomb3d-hiddenOdd {
+.bomb-hiddenOdd {
     background-color: #a0a0a0;
 }
 
-.bomb3d-exploded {
+.bomb-exploded {
     background-color: yellow;
-    -webkit-animation-name: bomb3d-explodePulse;
+    -webkit-animation-name: bomb-explodePulse;
     -webkit-animation-duration: 0.5s;
     -webkit-animation-iteration-count: 10;
     -webkit-animation-direction: alternate;
@@ -120,7 +135,7 @@ button {
     -webkit-animation-fill-mode: forwards;
 }
 
-.bomb3d-hasBomb {
+.bomb-hasBomb {
     background-image: url('../images/bomb.png');
     background-position: center;
     background-repeat: no-repeat;
@@ -128,14 +143,14 @@ button {
     background-size: contain;
 }
 
-.bomb3d-hasFlag {
+.bomb-hasFlag {
     background-image: url('../images/myflag.png');
     background-position: center;
     background-repeat: no-repeat;
     background-size: contain;
 }
 
-.bomb3d-flagChoice {
+.bomb-flagChoice {
     background-color: rgb(120,181,210);
 }
 
@@ -144,7 +159,7 @@ button {
     50% {z-index:999; -webkit-box-shadow: inset 0 0 5px 5px #f00;}
 }
 
-@-webkit-keyframes bomb3d-explodePulse {
+@-webkit-keyframes bomb-explodePulse {
     0% {background-color: yellow;}
     100% {background-color: red;}
 }
