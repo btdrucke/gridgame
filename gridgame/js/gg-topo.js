@@ -220,7 +220,7 @@ Game.Topology.Cylinder = function (xSize, ySize, domId)
     this.Inherits(Game.Topology, xSize || xSizeDefault, ySize || ySizeDefault, domId || domIdDefault)  ;
 
     this.data.xInRange   = function (x) {return true;};
-    this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.data.xMax());}
+    this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.xMax());}
     this.data.xDistanace = function (x1, x2) {
         var dist = Math.abs(x1 - x2);
         return (dist < xMax/2) ? dist : Math.abs(dist - xMax);
@@ -338,7 +338,7 @@ Game.Topology.Torus = function (xSize, ySize, domId)
                 var yTotalRot = (y+this.yPos)*yElemRot;
                 var elem = this.data.cell(x, y).elem;
                 var width = ((xOuterElemSize-xInnerElemSize)/2)*(Math.cos(yTotalRot)+1) + xInnerElemSize;
-                elem.innerText = x+","+y;
+                //elem.innerText = x+","+y;
                 elem.style.width = width+"px";
                 elem.style.webkitTransform = ("rotateX("+yTotalRot+"rad) " +
                                               "translateX("+(xOuterElemSize-width)/2+"px) " +

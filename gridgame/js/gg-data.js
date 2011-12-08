@@ -64,15 +64,33 @@ Game.Data = function (inXMax, inYMax)
         return Math.abs(y1 - y2);
     }
 
-    this.cell = function (inX, inY) {
-        var x = this.xNormalize(inX);
+    this.row = function (inY) {
         var y = this.yNormalize(inY);
-        if (this.xInRange(x) && this.yInRange(y)) {
-            return _grid[y][x];
+        if (this.yInRange(y)) {
+            return _grid[y];
         }
         else {
             return undefined;
         }
+    }
+
+    // This can be called either as:
+    //   cell(x, y)
+    //   cell(rowArray, x)
+    this.cell = function (inX, inY) {
+        var row;
+        if (inX instanceof Array) {
+            row = inX;
+            inX = inY;
+        }
+        row = row || this.row(inY);
+        if (row) {
+            var x = this.xNormalize(inX);
+            if (this.xInRange(x)) {
+                return row[x];
+            }
+        }
+        return undefined;
     }
   
     this.forEach = function (fn) {
