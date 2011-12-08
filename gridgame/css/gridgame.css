@@ -36,7 +36,7 @@ button {
 #flag {
     background-image: url('../images/myflag.png');
     background-repeat: no-repeat;
-    background-size: 30px 30px;
+    background-size: contain;
     background-position: center;
     width: 35px;
     color: transparent;
@@ -131,8 +131,8 @@ button {
 .bomb3d-hasFlag {
     background-image: url('../images/myflag.png');
     background-position: center;
-    background-size: 30px 30px;
     background-repeat: no-repeat;
+    background-size: contain;
 }
 
 .bomb3d-flagChoice {
