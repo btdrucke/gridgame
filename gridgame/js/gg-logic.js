@@ -34,7 +34,7 @@ Game.Logic.Bomb = function (topology)
     };
 
 
-    this.didWin = function () 
+    this.hasWin = function () 
     {
         return (_cellsToShow === 0);
     }
@@ -55,7 +55,6 @@ Game.Logic.Bomb = function (topology)
                              "bomb-flagChoice",
                              "bomb-exploded");
         });
-        
         _floodStack = [];
         _showQueue = [];
     };
@@ -137,14 +136,6 @@ Game.Logic.Bomb = function (topology)
     function _doShow (startingCell) 
     {
         _showQueue.sort(function(a,b) {
-            /*
-            var aDistX = Math.abs(a.x-x);
-            var bDistX = Math.abs(b.x-x);
-            if (do3D && (aDistX > xMax/2)) aDistX = Math.abs(aDistX - xMax);
-            if (do3D && (bDistX > xMax/2)) bDistX = Math.abs(bDistX - xMax);
-            var aDist = Math.pow(aDistX,2) + Math.pow(Math.abs(a.y-y),2);
-            var bDist = Math.pow(bDistX,2) + Math.pow(Math.abs(b.y-y),2);
-            */
             var aDist = a.distanceSqr(startingCell);
             var bDist = b.distanceSqr(startingCell);
 
@@ -233,6 +224,29 @@ Game.Logic.Bomb = function (topology)
         _explodeSound.play();
     }
 
+    this.win = function (winningCell)
+    {
+        if (_bombsToCreate) {
+	    _placeBombs.bind(this)();
+        }
+
+        if (!_cellsToShow) {
+            return;
+        }
+
+        _successSound = success || document.getElementById("success");
+        var topo = this.topology;
+        topo.setMessage("You WIN!");
+        topo.data.forEach(function (cell) {
+	    if (cell.hasBomb()) {
+		cell.hasFlag = true;
+	    }
+        });
+        _showAll.bind(this)(winningCell);
+        _successSound.play();
+    }
+
+
     this.doHint = function ()
     {
         if (_bombsToCreate) {
@@ -253,10 +267,112 @@ Game.Logic.Bomb = function (topology)
 
         var topo = this.topology;
         topo.setMessage("Hint: ("+xHint+"x"+yHint+")");
+
+        _queueShow(cell);
+        _doShow(cell);
+	cell.elem.style.webkitAnimationName = "bomb-hintPulse";
+
 	topo.spinTo(xHint, yHint, function() {
-	    this.floodFill(xHint, yHint);
-	    cell.elem.style.webkitAnimationName = "bomb-hintPulse";
+	    //this.floodFill(xHint, yHint);
+	    //cell.elem.style.webkitAnimationName = "bomb-hintPulse";
 	});
+    }
+
+
+    this.floodFill = function (startX, startY)
+    {
+        console.log("floodFill",startX,startY);
+        if (_bombsToCreate) {
+	    _placeBombs.bind(this)(x,y);
+        }
+
+        var startingCell = this.data.cell(startX, startY);
+        if (startingCell.hasBomb()) {
+            this.explode(startX, startY);
+            return;
+        }
+
+        this.topology.spinTo(startX, startY);
+        if (startingCell.shown) {
+            return;
+        }
+        
+        if (startingCell.count > 0) {
+            _queueShow.bind(this)(startingCell);
+	    if (!cellsToShow) {
+	        this.win(startingCell);
+	    }
+	    else {
+	        _doShow.bind(this)(startingCell);
+	    }
+    	    return;
+        }
+
+        _floodStack = [startingCell];
+        while(_floodStack.length) {
+            var cell = _floodStack.pop();
+            var x = cell.x();
+            var y = cell.y();
+
+            var x1 = x; 
+            var cell1;
+            do {
+                cell1 = this.data.cell(x1,y);
+                --x1;
+            }
+            while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0) && (x1 != x));
+            ++x1;
+
+            var spanTop  = false;
+            var spanBottom = false;
+
+            while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0)) {
+	        conditionalShow(x-1, y1);
+                queueShow(x, y1);
+	        conditionalShow(x+1, y1);
+                
+	        if (y1 > 0) {
+		    conditionalShow(x-1, y1-1);
+		    conditionalShow(x,   y1-1);
+		    conditionalShow(x+1, y1-1);
+	        }
+	        if (y1 < yMax-1) {
+		    conditionalShow(x-1, y1+1);
+		    conditionalShow(x,   y1+1);
+		    conditionalShow(x+1, y1+1);
+	        }
+	        
+	        if (!cellsToShow) {
+		    win(startX,startY);
+		    return;
+	        }
+
+	        var leftNeedsShowing = do3D 
+		    ? (isHidden(xPrev(x), y1) && (grid[y1][xPrev(x)].count == 0))
+		    : ((x > 0) && isHidden(x-1, y1) && (grid[y1][x-1].count == 0));
+
+                if (!spanLeft && leftNeedsShowing) {
+                    if (!push(xPrev(x), y1)) return;
+                    spanLeft = true;
+                }
+                else if (spanLeft && !leftNeedsShowing) {
+                    spanLeft = false;
+                }
+
+	        var rightNeedsShowing = do3D
+		    ? (isHidden(xNext(x), y1) && (grid[y1][xNext(x)].count == 0))
+		    : ((x < xMax - 1) && isHidden(x+1, y1) && (grid[y1][x+1].count == 0));
+                if (!spanRight && rightNeedsShowing) {
+                    if (!push(xNext(x), y1)) return;
+                    spanRight = true;
+                }
+                else if (spanRight && !rightNeedsShowing) {
+                    spanRight = false;
+                }
+                ++y1;
+            }
+        }
+        _doShow.bind(this)(startingCell);
     }
 
 
@@ -273,18 +389,25 @@ Game.Logic.Bomb = function (topology)
     var _cellsToShow = _numCells - _bombsToCreate;
     var _floodStack = [];
     var _showQueue = [];
-    var _clickSound, _explodeSound;
+    var _clickSound, _explodeSound, _successSound;
 
     // ----------------
     // constructor code
 
     this.reset();
+    /*
     this.topology.forEach(function (elem, x, y) {
-        //elem.addEventListener("click",     new Function('Game.Logic.Bomb.doFloodFill('+x+', '+y+');'), false);
-        //elem.addEventListener("mouseover", new Function('Game.Logic.Bomb.enterCell('+x+', '+y+');'), false);
-        //elem.addEventListener("mouseout",  new Function('Game.Logic.Bomb.leaveCell('+x+', '+y+');'), false);
+        elem.addEventListener("click",     new Function('Game.Logic.Bomb.doFloodFill('+x+', '+y+');'), false);
+        elem.addEventListener("mouseover", new Function('Game.Logic.Bomb.enterCell('+x+', '+y+');'), false);
+        elem.addEventListener("mouseout",  new Function('Game.Logic.Bomb.leaveCell('+x+', '+y+');'), false);
     });
+    */
 
-    _placeBombs.bind(this)(0,0);
+    //_placeBombs.bind(this)(0,0);
+
+    document.getElementById("hint").addEventListener("click", this.doHint.bind(this), false);
+    document.getElementById("reset3d").addEventListener("click", function (e) {
+        this.win.bind(this);
+    }.bind(this), false);
 
 }; // Game.Logic.Bomb
