@@ -407,7 +407,8 @@ Game.Logic.Bomb = function (topology)
 
     document.getElementById("hint").addEventListener("click", this.doHint.bind(this), false);
     document.getElementById("reset3d").addEventListener("click", function (e) {
-        this.win.bind(this);
+        var cell = this.data.cell(this.topology.xPos, this.topology.yPos);
+        this.win.bind(this)(cell);
     }.bind(this), false);
 
 }; // Game.Logic.Bomb
