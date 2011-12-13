@@ -8,12 +8,14 @@ body {
     font-size: 12px;
     background-image: -webkit-gradient(radial,
 				       center center, 1,
-				       center center, 350,
+				       center center, 400,
 				       from(rgba(255, 255, 255, 0.5)),
 				       to(rgba(255, 255, 255, 0)));
     background-repeat: no-repeat;
     -webkit-user-select: none;
     -webkit-transform-style: preserve-3d;
+    height: 800px;
+    width: 100%;
 }
 
 #control {
