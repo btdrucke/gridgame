@@ -17,6 +17,7 @@ Game.DataCell = function (x, y)
     var _x = x;
     var _y = y;
     var _elem = document.createElement("div");
+    _elem.cell = this;
 };
 
 
