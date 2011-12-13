@@ -23,12 +23,6 @@ Function.prototype.Inherits = function( parent )
 // Game namespace helper functions
 // -------------------------------
 
-Game.normalizeGridIndex = function (w, wMax)
-{
-    var wTemp = (w % wMax);
-    return (wTemp < 0) ? (wTemp+wMax) : wTemp;
-}
-
 // based on http://www.selfcontained.us/2009/09/16/getting-keycode-values-in-javascript/
 Game.getKeyCode = function (event)
 {
