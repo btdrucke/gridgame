@@ -19,6 +19,8 @@ Game.Logic = function (options)
 
     this.topology = options.topology;
     this.data = this.topology.data;
+    this.xSize = this.data.xMax;
+    this.ySize = this.data.yMax;
 
     this.topology.clickCb = function (cell, event)
     {
@@ -114,10 +116,10 @@ Game.Logic.Bomb = function (options)
 
     function _showAll (startingCell)
     {
-        this.data.forEach(function (cell) {
+        this.data.eachCell(function (cell) {
             _queueShow(cell);
         });
-        _doShow(startingCell);
+        _doShow.bind(this)(startingCell);
     };
 
 
@@ -141,8 +143,6 @@ Game.Logic.Bomb = function (options)
 
     function _show (cell)
     {
-        //console.log("show",x,y);
-
         cell.shown = true;
         var elem = cell.elem;
         var classList = elem.classList;
@@ -171,9 +171,10 @@ Game.Logic.Bomb = function (options)
 
     function _doShow (startingCell) 
     {
+        var distanceSqrFn = this.topology.distanceSqr.bind(this.topology);
         _showQueue.sort(function(a,b) {
-            var aDist = a.distanceSqr(startingCell);
-            var bDist = b.distanceSqr(startingCell);
+            var aDist = distanceSqrFn(startingCell, a);
+            var bDist = distanceSqrFn(startingCell, b);
 
             if (aDist === bDist) {
                 return 0;
@@ -211,27 +212,27 @@ Game.Logic.Bomb = function (options)
         }
     }
 
+    function _increaseBombCount (cell)
+    {
+        if (cell) {
+            ++cell.count;
+        }
+    }
+
     function _placeBomb (x, y) 
     {
-        var row = this.data.row(y);
-        var prevRow = this.data.row(y-1);
-        var nextRow = this.data.row(y+1);
-        var prevX = this.data.xNormalize(x-1);
-        var nextX = this.data.xNormalize(x+1);
+        this.data.cell(x, y).count = 9;
 
-        this.data.cell(row, x).count = 9;
-        this.data.cell(row, prevX).count++;
-        this.data.cell(row, nextX).count++;
-        if (prevRow) {
-            this.data.cell(prevRow, x).count++;
-            this.data.cell(prevRow, prevX).count++;
-            this.data.cell(prevRow, nextX).count++;
-        }
-        if (nextRow) {
-            this.data.cell(nextRow, x).count++;
-            this.data.cell(nextRow, prevX).count++;
-            this.data.cell(nextRow, nextX).count++;
-        }
+        var cellFn = this.data.cell.bind(this.data);
+
+        _increaseBombCount(cellFn(x-1, y-1));
+        _increaseBombCount(cellFn(x-1, y  ));
+        _increaseBombCount(cellFn(x-1, y+1));
+        _increaseBombCount(cellFn(x, y-1));
+        _increaseBombCount(cellFn(x, y+1));
+        _increaseBombCount(cellFn(x+1, y-1));
+        _increaseBombCount(cellFn(x+1, y  ));
+        _increaseBombCount(cellFn(x+1, y+1));
     }
 
 
@@ -252,7 +253,7 @@ Game.Logic.Bomb = function (options)
     this.win = function (winningCell)
     {
         if (_bombsToCreate) {
-	    _placeBombs.bind(this)();
+	    _placeBombs.bind(this)(winningCell);
         }
 
         if (!_cellsToShow) {
@@ -262,7 +263,7 @@ Game.Logic.Bomb = function (options)
         _successSound = success || document.getElementById("success");
         var topo = this.topology;
         topo.setMessage("You WIN!");
-        topo.data.forEach(function (cell) {
+        topo.data.eachCell(function (cell) {
 	    if (cell.hasBomb()) {
 		cell.hasFlag = true;
 	    }
@@ -431,7 +432,7 @@ Game.Logic.Bomb = function (options)
     var _xMax = this.xSize;
     var _yMax = this.ySize;
     var _showTimerId;
-    var _showTimerDelay = Math.min(10, 5000 / _numCells);
+    var _showTimerDelay = 1;//Math.min(10, 5000 / _numCells);
     var _bombsToCreate = Math.max(Math.round(_numCells * this.bombRatio), 1);
     var _cellsToShow = _numCells - _bombsToCreate;
     var _floodStack = [];

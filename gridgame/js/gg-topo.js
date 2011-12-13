@@ -1,5 +1,20 @@
 window.Game = window.Game || {};  // namespace
 
+// -------------------------
+// Topology helper functions
+// -------------------------
+
+Game.normalizeHelper = function (i, iMax)
+{
+    var iTemp = (i % iMax);
+    return (iTemp < 0) ? (iTemp+iMax) : iTemp;
+}
+
+Game.distanceHelper = function (i1, i2, iMax) {
+    var dist = Math.abs(i1 - i2);
+    return (dist < iMax/2) ? dist : Math.abs(dist - iMax);
+}
+
 // -------------------------------------------------
 // Game.Topology: Base class for rendering game grids
 // -------------------------------------------------
@@ -49,24 +64,14 @@ Game.Topology = function (options)
         });
     };
 
-    this.xNormalized = function (x) {
-        if (this.data.xInRange(x)) {
-            return x;
-        }
-    }
-
-    this.yNormalized = function (y) {
-        if (this.data.yInRange(y)) {
-            return y;
-        }
-    }
-
     this.neighbor = function (cell, xDelta, yDelta) {
-        return this.data.cell(cell.x + xDelta, cell.y + yDelta);
+        var newX = this.normalizeX(cell.x + xDelta);
+        var newY = this.normalizeY(cell.y + yDelta);
+        return this.data.cell(newX, newY);
     };
 
-    this.distanceSqr = function (other)  {
-        return Math.pow(this.xDistance(other),2) + Math.pow(this.yDistance(other),2);
+    this.distanceSqr = function (cell1, cell2)  {
+        return Math.pow(this.xDistance(cell1.x, cell2.x),2) + Math.pow(this.yDistance(cell1.y, cell2.y),2);
     };
 
     this.distance = function (other)  {
@@ -74,13 +79,30 @@ Game.Topology = function (options)
     };
 
 
+    // Should be customized per topo
+    this.normalizeX = function (x) {
+        if (this.data.xInRange(x)) {
+            return x;
+        }
+    }
+
+    // Should be customized per topo
+    this.normalizedY = function (y) {
+        if (this.data.yInRange(y)) {
+            return y;
+        }
+    }
+
+    // Should be customized per topo
     this.xDistance = function (x1, x2) {
         return Math.abs(x1 - x2);
     }
     
+    // Should be customized per topo
     this.yDistance = function (y1, y2) {
         return Math.abs(y1 - y2);
     }
+
 
     var _msgElem;
     this.setMessage = function (msg)
@@ -233,7 +255,7 @@ Game.Topology = function (options)
             var xDelta = coords.x - _lastX;
 	    var totalXDelta = coords.x - _firstX;
 	    if (Math.abs(totalXDelta) > 4) {
-	        var xSpinBy = -totalXDelta / 30;
+	        var xSpinBy = totalXDelta / 30;
 	        this.xSpinTo(_firstXPos - xSpinBy);
 	    }
 	    // fuzzy factor to determine drag versus sloppy click
@@ -325,7 +347,7 @@ Game.Topology.Plane = function (options)
         elem.style.left = that.elemSize * x - _topologyHalfWidth + "px";
         elem.style.width  = that.elemSize + "px";
         elem.style.height = that.elemSize + "px";
-        elem.style.lineHeight = elem.style.height;  // To valign
+        elem.style.lineHeight = that.elemSize + "px";  // To valign
     });
 };
 
@@ -345,11 +367,12 @@ Game.Topology.Cylinder = function (options)
     this.Inherits(Game.Topology, options);
 
 
-    this.data.xInRange   = function (x) {return true;};
-    this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.xMax);}
-    this.data.xDistanace = function (x1, x2) {
-        var dist = Math.abs(x1 - x2);
-        return (dist < xMax/2) ? dist : Math.abs(dist - xMax);
+    this.normalizeX = function (x) {
+        return Game.normalizeHelper(x, this.xSize);
+    }
+
+    this.xDistance = function (x1, x2) {
+        return Game.distanceHelper(x1, x2, this.xSize);
     }
 
     this.xSpinTo = function (xPos, callWhenDone)
@@ -378,6 +401,7 @@ Game.Topology.Cylinder = function (options)
         var xTotalRot = x*_xElemRot;
         elem.innerText = x+","+y;
         elem.style.height = _yElemSize + "px";
+        elem.style.lineHeight = _yElemSize+"px";  // To valign
         elem.style.width  = _xElemSize + "px";
         elem.style.webkitTransform = ("translateX("+-_xElemSize/2+"px)" + 
                                       "rotateY("+xTotalRot+"rad) " +
@@ -403,18 +427,20 @@ Game.Topology.Torus = function (options)
     options = Game.mergeOptions(_defaults, options);
     this.Inherits(Game.Topology, options);
     
-    this.data.xInRange   = function (x) {return true;};
-    this.data.xNormalize = function (x) {return Game.normalizeGridIndex(x, this.xSize);}
-    this.data.xDistance = function (x1, x2) {
-        var dist = Math.abs(x1 - x2);
-        return (dist < this.xMax/2) ? dist : Math.abs(dist - this.xMax);
+    this.normalizeX = function (x) {
+        return Game.normalizeHelper(x, this.xSize);
     }
 
-    this.data.yInRange   = function (y) {return true;};
-    this.data.yNormalize = function (y) {return Game.normalizeGridIndex(y, this.ySize);}
-    this.data.yDistance = function (y1, y2) {
-        var dist = Math.abs(y1 - y2);
-        return (dist < this.ySize/2) ? dist : Math.abs(dist - this.ySize);
+    this.xDistance = function (x1, x2) {
+        return Game.distanceHelper(x1, x2, this.xSize);
+    }
+
+    this.normalizeY = function (y) {
+        return Game.normalizeHelper(y, this.ySize);
+    }
+
+    this.yDistance = function (y1, y2) {
+        return Game.distanceHelper(y1, y2, this.ySize);
     }
 
     var _slices = new Array(this.xSize);
@@ -429,9 +455,8 @@ Game.Topology.Torus = function (options)
                 var elem = cell.elem;
                 elem.classList.add("cell");
                 elem.style.height = _yElemSize+"px";
-                elem.style.lineHeight = elem.style.height;  // To valign
+                elem.style.lineHeight = _yElemSize+"px";  // To valign
                 elem.innerText = x+","+y;
-                elem.cell = cell;
                 slice.appendChild(elem);
             }
         }
@@ -472,8 +497,8 @@ Game.Topology.Torus = function (options)
 
     this.xSpinTo = function (xPos, callWhenDone)
     {
-        console.log("Game.Topology.Torus.xSpinTo:", xPos);
         this.xPos = Math.round(xPos);
+        console.log("Game.Topology.Torus.xSpinTo:", this.xPos);
         _draw.bind(this)();
 
         /*
@@ -493,8 +518,8 @@ Game.Topology.Torus = function (options)
 
     this.ySpinTo = function (yPos, callWhenDone)
     {
-        console.log("Game.Topology.Torus.ySpinTo:", yPos);
         this.yPos = Math.round(yPos);
+        console.log("Game.Topology.Torus.ySpinTo:", this.yPos);
         _draw.bind(this)();
 
         return this;
