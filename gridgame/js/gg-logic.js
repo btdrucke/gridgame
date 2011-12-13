@@ -22,15 +22,15 @@ Game.Logic = function (options)
 
     this.topology.clickCb = function (cell, event)
     {
-        console.log("Clicked cell at",cell.x(), cell.y());
+        console.log("Clicked cell at",cell.x, cell.y);
     }
     this.topology.mouseoverCb = function (cell, event)
     {
-        console.log("Entered cell at",cell.x(), cell.y());
+        console.log("Entered cell at",cell.x, cell.y);
     }
     this.topology.mouseoutCb = function (cell, event)
     {
-        console.log("Left cell at",cell.x(), cell.y());
+        console.log("Left cell at",cell.x, cell.y);
     }
 
     this.onReady = function (event)
@@ -194,8 +194,8 @@ Game.Logic.Bomb = function (options)
 
     function _placeBombs (startingCell) 
     {
-        var xSafe = startingCell.x();
-        var ySafe = startingCell.y();
+        var xSafe = startingCell.x;
+        var ySafe = startingCell.y;
         while (_bombsToCreate) {
             var xBomb = Math.floor(Math.random()*_xMax);
             var yBomb = Math.floor(Math.random()*_yMax);
@@ -237,8 +237,8 @@ Game.Logic.Bomb = function (options)
 
     this.explode = function (x,y)
     {
-        var x = startingCell.x();
-        var y = startingCell.y();
+        var x = startingCell.x;
+        var y = startingCell.y;
         this.topology.spinTo(x,y)
         console.log("explode",x,y);
         _explodeSound = _explodeSound || document.getElementById("explode");
@@ -316,8 +316,8 @@ Game.Logic.Bomb = function (options)
             return;
         }
 
-        var startX = startingCell.x();
-        var startY = startingCell.y();
+        var startX = startingCell.x;
+        var startY = startingCell.y;
         this.topology.spinTo(startX, startY);
 
         if (startingCell.shown) {
@@ -340,8 +340,8 @@ Game.Logic.Bomb = function (options)
         _floodStack = [startingCell];
         while(_floodStack.length) {
             var cell = _floodStack.pop();
-            var x = cell.x();
-            var y = cell.y();
+            var x = cell.x;
+            var y = cell.y;
             var prevRow = this.data.row(y-1);
             var currRow = this.data.row(y);
             var nextRow = this.data.row(y+1);
