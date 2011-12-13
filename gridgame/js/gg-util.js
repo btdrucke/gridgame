@@ -66,3 +66,18 @@ Game.clickCoordsWithinElement = function (event)
     return coords;
 }
 
+Game.mergeOptions = function (a, b)
+{
+    var merged = {};
+    for (var key in a) {
+        if (a.hasOwnProperty(key)) {
+            merged[key] = a[key];
+        }
+    }
+    for (var key in b) {
+        if (b.hasOwnProperty(key)) {
+            merged[key] = b[key];
+        }
+    }
+    return merged;
+}

@@ -4,10 +4,46 @@ window.Game = window.Game || {};  // namespace
 // Game.Logic: Base class for game logic
 // -------------------------------------
 
-Game.Logic = function (topology)
+Game.Logic = function (options)
 {
-    this.topology = topology;
-    this.data = topology.data;
+    // -------------
+    // options logic
+
+    var _defaults = {
+        topology: undefined
+    };
+    options = Game.mergeOptions(_defaults, options);
+
+    // ------
+    // public
+
+    this.topology = options.topology;
+    this.data = this.topology.data;
+
+    this.topology.clickCb = function (cell, event)
+    {
+        console.log("Clicked cell at",cell.x(), cell.y());
+    }
+    this.topology.mouseoverCb = function (cell, event)
+    {
+        console.log("Entered cell at",cell.x(), cell.y());
+    }
+    this.topology.mouseoutCb = function (cell, event)
+    {
+        console.log("Left cell at",cell.x(), cell.y());
+    }
+
+    this.onReady = function (event)
+    {
+        //noop
+    }
+    
+    function _onReadyDispatch (event)
+    {
+        return this.onReady(event);
+    }
+
+    document.addEventListener('DOMContentLoaded', _onReadyDispatch.bind(this), false);
 };
 
 
@@ -15,18 +51,18 @@ Game.Logic = function (topology)
 // Game.Logic.Bomb : minesweeper game logic
 // ------------------------------------------
 
-Game.Logic.Bomb = function (topology)
+Game.Logic.Bomb = function (options)
 {
-    this.Inherits(Game.Logic, topology);
+    var _defaults = {
+        bombRatio: 0.125
+    }
+    options = Game.mergeOptions(_defaults, options);
+    this.Inherits(Game.Logic, options);
 
-    // -----------
-    // public data
+    // ------
+    // public
 
-    this.bombRatio = 0.125; //Math.min(bombRatio, 0.25);
-
-    // --------------
-    // public methods
-
+    this.bombRatio = options.bombRatio;
 
     // Add Bomb-specific state and logic to DataCell
     Game.DataCell.prototype.hasBomb = function () {
@@ -42,13 +78,13 @@ Game.Logic.Bomb = function (topology)
 
     this.reset = function () 
     {
-        this.data.forEach(function (cell) {
+        this.data.eachCell(function (cell) {
             cell.count = 0;
             cell.shown = false;
             cell.hasFlag = false;
             var classList = cell.elem.classList;
             classList.add("bomb-cell");
-            classList.add((cell.x() + cell.y())%2 ? "bomb-hiddenEven" : "bomb-hiddenOdd");
+            classList.add((cell.x + cell.y)%2 ? "bomb-hiddenEven" : "bomb-hiddenOdd");
             classList.remove("bomb-flagChoice",    // TODO: namespace these class names
                              "bomb-hasFlag",
                              "bomb-hasBomb",
@@ -156,36 +192,23 @@ Game.Logic.Bomb = function (topology)
     }
 
 
-    function _placeBombs (xSafe, ySafe) 
+    function _placeBombs (startingCell) 
     {
+        var xSafe = startingCell.x();
+        var ySafe = startingCell.y();
         while (_bombsToCreate) {
             var xBomb = Math.floor(Math.random()*_xMax);
             var yBomb = Math.floor(Math.random()*_yMax);
 	    if ((xBomb === xSafe) && (yBomb === ySafe)) {
 	        continue;
 	    }
-            if (this.data.cell(xBomb, yBomb).hasBomb()) {
+            var cell = this.data.cell(xBomb, yBomb);
+            if (cell.hasBomb()) {
                 continue;
             }
             _placeBomb.bind(this)(xBomb, yBomb);
             --_bombsToCreate;
         }
-        /*
-        this.data.forEach(function (cell) {
-            var classes = cell.elem.classList;
-            if (cell.hasBomb()) {
-                classes.add("bomb3d-hasBomb");
-            }
-            else if (cell.count) {
-                var count = cell.count;
-                var gb = Math.round(255 * (8-count)/8);
-                var elem = cell.elem;
-                elem.innerText = count;
-                elem.style.backgroundColor = "rgb(255,"+gb+","+gb+")";
-                classes.remove("bomb3d-hiddenEven", "bomb3d-hiddenOdd")
-            }
-        });
-        */
     }
 
     function _placeBomb (x, y) 
@@ -214,9 +237,11 @@ Game.Logic.Bomb = function (topology)
 
     this.explode = function (x,y)
     {
+        var x = startingCell.x();
+        var y = startingCell.y();
+        this.topology.spinTo(x,y)
         console.log("explode",x,y);
         _explodeSound = _explodeSound || document.getElementById("explode");
-        this.topology.spinTo(x,y)
         var cell = this.data.cell(x,y);
         _showAll.bind(this)(cell);
         cell.elem.classList.add("bomb-exploded");
@@ -249,10 +274,6 @@ Game.Logic.Bomb = function (topology)
 
     this.doHint = function ()
     {
-        if (_bombsToCreate) {
-	    _placeBombs.bind(this)();
-        }
-
         if (!_cellsToShow) {
             return;
         }
@@ -265,11 +286,16 @@ Game.Logic.Bomb = function (topology)
         }
         while (cell.shown || cell.hasBomb());
 
+        if (_bombsToCreate) {
+	    _placeBombs.bind(this)(cell);
+        }
+
         var topo = this.topology;
         topo.setMessage("Hint: ("+xHint+"x"+yHint+")");
 
-        _queueShow(cell);
-        _doShow(cell);
+        //_queueShow(cell);
+        //_doShow(cell);
+	this.floodFill(cell);
 	cell.elem.style.webkitAnimationName = "bomb-hintPulse";
 
 	topo.spinTo(xHint, yHint, function() {
@@ -279,27 +305,30 @@ Game.Logic.Bomb = function (topology)
     }
 
 
-    this.floodFill = function (startX, startY)
+    this.floodFill = function (startingCell)
     {
-        console.log("floodFill",startX,startY);
         if (_bombsToCreate) {
-	    _placeBombs.bind(this)(x,y);
+	    _placeBombs.bind(this)(startingCell);
         }
 
-        var startingCell = this.data.cell(startX, startY);
         if (startingCell.hasBomb()) {
-            this.explode(startX, startY);
+            this.explode(startingCell);
             return;
         }
 
+        var startX = startingCell.x();
+        var startY = startingCell.y();
         this.topology.spinTo(startX, startY);
+
         if (startingCell.shown) {
             return;
         }
         
+        console.log("floodFill", startX, startY);
+
         if (startingCell.count > 0) {
             _queueShow.bind(this)(startingCell);
-	    if (!cellsToShow) {
+	    if (!_cellsToShow) {
 	        this.win(startingCell);
 	    }
 	    else {
@@ -313,37 +342,41 @@ Game.Logic.Bomb = function (topology)
             var cell = _floodStack.pop();
             var x = cell.x();
             var y = cell.y();
+            var prevRow = this.data.row(y-1);
+            var currRow = this.data.row(y);
+            var nextRow = this.data.row(y+1);
 
             var x1 = x; 
             var cell1;
             do {
-                cell1 = this.data.cell(x1,y);
+                cell1 = thisRow[x1];
                 --x1;
-            }
-            while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0) && (x1 != x));
+            } while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0) && (x1 != x));
             ++x1;
 
             var spanTop  = false;
             var spanBottom = false;
 
-            while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0)) {
-	        conditionalShow(x-1, y1);
-                queueShow(x, y1);
-	        conditionalShow(x+1, y1);
-                
-	        if (y1 > 0) {
-		    conditionalShow(x-1, y1-1);
-		    conditionalShow(x,   y1-1);
-		    conditionalShow(x+1, y1-1);
-	        }
-	        if (y1 < yMax-1) {
-		    conditionalShow(x-1, y1+1);
-		    conditionalShow(x,   y1+1);
-		    conditionalShow(x+1, y1+1);
-	        }
+            do {
+                cell1 = thisRow[x1];
+                _queueShow (cell1);
+                var hasPrevCell = this.data.xInRange(x1-1);
+                var hasNextCell = this.data.xInRange(x1+1);
+                if (prevRow) {
+                    _queueShow (cell1);
+                }
+            
+	        conditionalShow(x1, y-1);
+	        conditionalShow(x1, y+1);
+		conditionalShow(x1-1, y-1);
+		conditionalShow(x1-1,   y);
+		conditionalShow(x1-1, y+1);
+		conditionalShow(x1+1, y-1);
+		conditionalShow(x1+1,   y);
+		conditionalShow(x1+1, y+1);
 	        
-	        if (!cellsToShow) {
-		    win(startX,startY);
+	        if (!_cellsToShow) {
+		    this.win(startingCell);
 		    return;
 	        }
 
@@ -369,20 +402,34 @@ Game.Logic.Bomb = function (topology)
                 else if (spanRight && !rightNeedsShowing) {
                     spanRight = false;
                 }
-                ++y1;
-            }
+                ++x1;
+            } while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0) && (x1 != x));
         }
         _doShow.bind(this)(startingCell);
     }
 
+    function cellEventHandler (event) 
+    {
+        
+    }
+
+
+    this.onReady = function (Event) 
+    {
+        document.getElementById("hint").addEventListener("click", this.doHint.bind(this), false);
+        document.getElementById("reset3d").addEventListener("click", function (e) {
+            var cell = this.data.cell(this.topology.xPos, this.topology.yPos);
+            this.win.bind(this)(cell);
+        }.bind(this), false);
+    }
 
     // ------------
     // private data
 
 
-    var _numCells = this.data.numCells();
-    var _xMax = this.data.xMax();
-    var _yMax = this.data.yMax();
+    var _numCells = this.data.numCells;
+    var _xMax = this.xSize;
+    var _yMax = this.ySize;
     var _showTimerId;
     var _showTimerDelay = Math.min(10, 5000 / _numCells);
     var _bombsToCreate = Math.max(Math.round(_numCells * this.bombRatio), 1);
@@ -395,20 +442,5 @@ Game.Logic.Bomb = function (topology)
     // constructor code
 
     this.reset();
-    /*
-    this.topology.forEach(function (elem, x, y) {
-        elem.addEventListener("click",     new Function('Game.Logic.Bomb.doFloodFill('+x+', '+y+');'), false);
-        elem.addEventListener("mouseover", new Function('Game.Logic.Bomb.enterCell('+x+', '+y+');'), false);
-        elem.addEventListener("mouseout",  new Function('Game.Logic.Bomb.leaveCell('+x+', '+y+');'), false);
-    });
-    */
-
-    //_placeBombs.bind(this)(0,0);
-
-    document.getElementById("hint").addEventListener("click", this.doHint.bind(this), false);
-    document.getElementById("reset3d").addEventListener("click", function (e) {
-        var cell = this.data.cell(this.topology.xPos, this.topology.yPos);
-        this.win.bind(this)(cell);
-    }.bind(this), false);
 
 }; // Game.Logic.Bomb

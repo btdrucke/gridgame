@@ -54,14 +54,13 @@ button {
 
 #stage {
     width: 100%;
-    height: 600px;
+    height: 700px;
     display: -webkit-box;
     -webkit-box-align: center;
     -webkit-box-pack: center;
     -webkit-user-select: none;
     -webkit-perspective: 2000;
     -webkit-perspective-origin: 50% 50%;
-    -webkit-transform: translateY(-20px);
     -webkit-transform-style: preserve-3d;
 }
 
@@ -83,7 +82,7 @@ button {
 }
 
 .cell {
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: rgba(0,0,0,0);
     display: table-cell;
     position: absolute;
@@ -97,7 +96,7 @@ button {
     -webkit-backface-visibility: visible;
     -webkit-transform-style: preserve-3d;
 
-    -webkit-transition: -webkit-transform .5s,
+    -webkit-transition: -webkit-transform 1s,
                         width .5s,
                         background-color 1s,
                         background-image 1s,
@@ -109,12 +108,6 @@ button {
     font-size: 12pt;
     color: black;
     -webkit-backface-visibility: hidden;
-
-    -webkit-transition: -webkit-transform .5s,
-                        width .5s,
-                        background-color .1s,
-                        background-image .1s,
-                        border-color .1s;
 }
 
 .bomb-hiddenEven {
