@@ -30,16 +30,16 @@ Game.Data = function (xMax, yMax)
     this.__defineGetter__("numCells", function() { return _numCells; });
 
     this.xInRange = function (x) {
-        return (x>=0) && (x < _xMax);
+        return (x !== undefined) && (x>=0) && (x < _xMax);
     };
 
     this.yInRange = function (y) {
-        return (y>=0) && (y < _yMax);
+        return (y !== undefined) && (y>=0) && (y < _yMax);
     };
 
     this.row = function (y) 
     {
-        if ((y !== undefined) && this.yInRange(y)) {
+        if (this.yInRange(y)) {
             return _grid[y];
         }
     }

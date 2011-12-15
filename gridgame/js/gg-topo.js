@@ -81,16 +81,12 @@ Game.Topology = function (options)
 
     // Should be customized per topo
     this.normalizeX = function (x) {
-        if (this.data.xInRange(x)) {
-            return x;
-        }
+        return x;
     }
 
     // Should be customized per topo
-    this.normalizedY = function (y) {
-        if (this.data.yInRange(y)) {
-            return y;
-        }
+    this.normalizeY = function (y) {
+        return y;
     }
 
     // Should be customized per topo
@@ -399,7 +395,7 @@ Game.Topology.Cylinder = function (options)
     this.eachElem(function (elem, x, y) {
         elem.classList.add("cell");
         var xTotalRot = x*_xElemRot;
-        elem.innerText = x+","+y;
+        //elem.innerText = x+","+y;
         elem.style.height = _yElemSize + "px";
         elem.style.lineHeight = _yElemSize+"px";  // To valign
         elem.style.width  = _xElemSize + "px";
@@ -456,7 +452,7 @@ Game.Topology.Torus = function (options)
                 elem.classList.add("cell");
                 elem.style.height = _yElemSize+"px";
                 elem.style.lineHeight = _yElemSize+"px";  // To valign
-                elem.innerText = x+","+y;
+                //elem.innerText = x+","+y;
                 slice.appendChild(elem);
             }
         }

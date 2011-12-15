@@ -212,40 +212,47 @@ Game.Logic.Bomb = function (options)
         }
     }
 
-    function _increaseBombCount (cell)
+    function _increaseBombCount (x, y)
     {
+        var cell = _cellFn(x, y);
         if (cell) {
             ++cell.count;
         }
     }
 
+    var _normalizeXFn = this.topology.normalizeX.bind(this.topology);
+    var _normalizeYFn = this.topology.normalizeY.bind(this.topology);
+    var _cellFn       = this.data.cell.bind(this.data);
+
     function _placeBomb (x, y) 
     {
-        this.data.cell(x, y).count = 9;
+        _cellFn(x, y).count = 9;
 
-        var cellFn = this.data.cell.bind(this.data);
+        var xPrev = _normalizeXFn(x-1);
+        var xNext = _normalizeXFn(x+1);
+        var yPrev = _normalizeYFn(y-1);
+        var yNext = _normalizeYFn(y+1);
 
-        _increaseBombCount(cellFn(x-1, y-1));
-        _increaseBombCount(cellFn(x-1, y  ));
-        _increaseBombCount(cellFn(x-1, y+1));
-        _increaseBombCount(cellFn(x, y-1));
-        _increaseBombCount(cellFn(x, y+1));
-        _increaseBombCount(cellFn(x+1, y-1));
-        _increaseBombCount(cellFn(x+1, y  ));
-        _increaseBombCount(cellFn(x+1, y+1));
+        _increaseBombCount(xPrev, yPrev);
+        _increaseBombCount(xPrev, y    );
+        _increaseBombCount(xPrev, yNext);
+        _increaseBombCount(x,     yPrev);
+        _increaseBombCount(x,     yNext);
+        _increaseBombCount(xNext, yPrev);
+        _increaseBombCount(xNext, y    );
+        _increaseBombCount(xNext, yNext);
     }
 
 
-    this.explode = function (x,y)
+    this.explode = function (startingCell)
     {
         var x = startingCell.x;
         var y = startingCell.y;
         this.topology.spinTo(x,y)
         console.log("explode",x,y);
         _explodeSound = _explodeSound || document.getElementById("explode");
-        var cell = this.data.cell(x,y);
-        _showAll.bind(this)(cell);
-        cell.elem.classList.add("bomb-exploded");
+        _showAll.bind(this)(startingCell);
+        startingCell.elem.classList.add("bomb-exploded");
         this.topology.setMessage("You lose!");
         _explodeSound.play();
     }
@@ -254,10 +261,6 @@ Game.Logic.Bomb = function (options)
     {
         if (_bombsToCreate) {
 	    _placeBombs.bind(this)(winningCell);
-        }
-
-        if (!_cellsToShow) {
-            return;
         }
 
         _successSound = success || document.getElementById("success");
@@ -305,6 +308,13 @@ Game.Logic.Bomb = function (options)
 	});
     }
 
+    function _conditionalShow (cell)
+    {
+        if (cell && (cell.count > 0)) {
+            _queueShow(cell);
+        }
+    }
+
 
     this.floodFill = function (startingCell)
     {
@@ -343,84 +353,74 @@ Game.Logic.Bomb = function (options)
             var cell = _floodStack.pop();
             var x = cell.x;
             var y = cell.y;
-            var prevRow = this.data.row(y-1);
-            var currRow = this.data.row(y);
-            var nextRow = this.data.row(y+1);
 
-            var x1 = x; 
+            var y1 = y;
             var cell1;
             do {
-                cell1 = thisRow[x1];
-                --x1;
-            } while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0) && (x1 != x));
-            ++x1;
+                y1 = _normalizeYFn(y1 - 1);
+                cell1 = _cellFn(x, y1);
+            } while ((y1 !== y) && cell1 && !cell1.shown && (cell1.count === 0));
+            y1 = _normalizeYFn(y1 + 1);
+            cell1 = _cellFn(x, y1);
 
-            var spanTop  = false;
-            var spanBottom = false;
+            var spanLeft  = false;
+            var spanRight = false;
 
+            var y1Start = y1;
+            var cell2;
             do {
-                cell1 = thisRow[x1];
-                _queueShow (cell1);
-                var hasPrevCell = this.data.xInRange(x1-1);
-                var hasNextCell = this.data.xInRange(x1+1);
-                if (prevRow) {
-                    _queueShow (cell1);
-                }
-            
-	        conditionalShow(x1, y-1);
-	        conditionalShow(x1, y+1);
-		conditionalShow(x1-1, y-1);
-		conditionalShow(x1-1,   y);
-		conditionalShow(x1-1, y+1);
-		conditionalShow(x1+1, y-1);
-		conditionalShow(x1+1,   y);
-		conditionalShow(x1+1, y+1);
+                _queueShow(cell1);
+                var xPrev = _normalizeXFn(x-1);
+                var xNext = _normalizeXFn(x+1);
+                var yPrev = _normalizeYFn(y1-1);
+                var yNext = _normalizeYFn(y1+1);
+
+                var leftCell  = _cellFn(xPrev, y1); _conditionalShow(leftCell);
+                var rightCell = _cellFn(xNext, y1); _conditionalShow(rightCell);
+                cell2 = _cellFn(xPrev, yPrev); _conditionalShow(cell2);
+                cell2 = _cellFn(x    , yPrev); _conditionalShow(cell2);
+                cell2 = _cellFn(xNext, yPrev); _conditionalShow(cell2);
+                cell2 = _cellFn(xPrev, yNext); _conditionalShow(cell2);
+                cell2 = _cellFn(x    , yNext); _conditionalShow(cell2);
+                cell2 = _cellFn(xNext, yNext); _conditionalShow(cell2);
 	        
 	        if (!_cellsToShow) {
 		    this.win(startingCell);
 		    return;
 	        }
 
-	        var leftNeedsShowing = do3D 
-		    ? (isHidden(xPrev(x), y1) && (grid[y1][xPrev(x)].count == 0))
-		    : ((x > 0) && isHidden(x-1, y1) && (grid[y1][x-1].count == 0));
+	        var leftNeedsShowing = (leftCell && !leftCell.shown && (leftCell.count === 0));
 
                 if (!spanLeft && leftNeedsShowing) {
-                    if (!push(xPrev(x), y1)) return;
+                    _floodStack.push(leftCell);
                     spanLeft = true;
                 }
                 else if (spanLeft && !leftNeedsShowing) {
                     spanLeft = false;
                 }
 
-	        var rightNeedsShowing = do3D
-		    ? (isHidden(xNext(x), y1) && (grid[y1][xNext(x)].count == 0))
-		    : ((x < xMax - 1) && isHidden(x+1, y1) && (grid[y1][x+1].count == 0));
+	        var rightNeedsShowing = (rightCell && !rightCell.shown && (rightCell.count === 0));
                 if (!spanRight && rightNeedsShowing) {
-                    if (!push(xNext(x), y1)) return;
+                    _floodStack.push(rightCell);
                     spanRight = true;
                 }
                 else if (spanRight && !rightNeedsShowing) {
                     spanRight = false;
                 }
-                ++x1;
-            } while (this.data.xInRange(x1) && !cell1.shown && (cell1.count === 0) && (x1 != x));
+
+                y1 = _normalizeYFn(y1 + 1);
+                cell1 = _cellFn(x, y1);
+            } while ((y1 !== y1Start) && cell1 && !cell1.shown && (cell1.count === 0));
         }
         _doShow.bind(this)(startingCell);
     }
-
-    function cellEventHandler (event) 
-    {
-        
-    }
-
 
     this.onReady = function (Event) 
     {
         document.getElementById("hint").addEventListener("click", this.doHint.bind(this), false);
         document.getElementById("reset3d").addEventListener("click", function (e) {
             var cell = this.data.cell(this.topology.xPos, this.topology.yPos);
-            this.win.bind(this)(cell);
+            this.win(cell);
         }.bind(this), false);
     }
 
@@ -443,5 +443,6 @@ Game.Logic.Bomb = function (options)
     // constructor code
 
     this.reset();
+    this.topology.clickCb = this.floodFill.bind(this);
 
 }; // Game.Logic.Bomb
