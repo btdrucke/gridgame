@@ -3,6 +3,7 @@
 }
 
 body {
+    margin: 0px;
     background-color: black;
     font-family: 'Lucida Grande', Verdana, Arial;
     font-size: 12px;
