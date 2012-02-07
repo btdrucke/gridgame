@@ -328,22 +328,28 @@ Game.Topology.Plane = function (options)
     options = Game.mergeOptions(_defaults, options);
     this.Inherits(Game.Topology, options);
 
-    var _topologyHalfWidth  = this.elemSize * this.data.xMax/2;
-    var _topologyHalfHeight = this.elemSize * this.data.yMax/2;
-
+    this.onReady = function (event)
+    {
+        this.domElem.appendChild(_fragment);
+    }
 
     // -----------
     // constructor
 
-    var that = this;
+    var _elemSize = this.elemSize;
+    var _topologyHalfWidth  = _elemSize * this.data.xMax/2;
+    var _topologyHalfHeight = _elemSize * this.data.yMax/2;
+    var _fragment = document.createDocumentFragment();
+
     this.eachElem(function (elem, x, y) {
         elem.classList.add("cell");
         //elem.innerText = x+","+y;
-        elem.style.top  = that.elemSize * (y-0.5) - _topologyHalfHeight + "px";
-        elem.style.left = that.elemSize * x - _topologyHalfWidth + "px";
-        elem.style.width  = that.elemSize + "px";
-        elem.style.height = that.elemSize + "px";
-        elem.style.lineHeight = that.elemSize + "px";  // To valign
+        elem.style.top  = _elemSize * (y-0.5) - _topologyHalfHeight + "px";
+        elem.style.left = _elemSize * x - _topologyHalfWidth + "px";
+        elem.style.width  = _elemSize + "px";
+        elem.style.height = _elemSize + "px";
+        elem.style.lineHeight = _elemSize + "px";  // To valign
+        _fragment.appendChild(elem);
     });
 };
 
@@ -381,6 +387,11 @@ Game.Topology.Cylinder = function (options)
         return this;
     }
 
+    this.onReady = function (event)
+    {
+        this.domElem.appendChild(_fragment);
+    }
+
     // -----------
     // constructor
 
@@ -391,7 +402,7 @@ Game.Topology.Cylinder = function (options)
     var _topologyHalfWidth  = _xElemSize * this.xSize/2;
     var _topologyHalfHeight = _yElemSize * this.ySize/2;
 
-    var that = this;
+    var _fragment = document.createDocumentFragment();
     this.eachElem(function (elem, x, y) {
         elem.classList.add("cell");
         var xTotalRot = x*_xElemRot;
@@ -404,6 +415,7 @@ Game.Topology.Cylinder = function (options)
                                       "translateZ("+_xRadius+"px) " +
                                       "translateY("+(_yElemSize*(y-0.5) - _topologyHalfHeight)+"px) " +
                                       "");
+        _fragment.appendChild(elem);
     });
 
 };
@@ -439,6 +451,7 @@ Game.Topology.Torus = function (options)
         return Game.distanceHelper(y1, y2, this.ySize);
     }
 
+    var _fragment = document.createDocumentFragment();
     var _slices = new Array(this.xSize);
     function _init ()
     {
@@ -455,6 +468,7 @@ Game.Topology.Torus = function (options)
                 //elem.innerText = x+","+y;
                 slice.appendChild(elem);
             }
+            _fragment.appendChild(slice);
         }
     }
 
@@ -528,9 +542,7 @@ Game.Topology.Torus = function (options)
         _stageElem = _stageElem || document.getElementById("stage");
         _stageElem.classList.add("torus");
 
-        for (var x = 0; x < this.xSize; ++x) {
-            this.domElem.appendChild(_slices[x]);
-        }
+        this.domElem.appendChild(_fragment);
     }
 
     // -----------

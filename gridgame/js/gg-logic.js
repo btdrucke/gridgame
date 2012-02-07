@@ -80,6 +80,16 @@ Game.Logic.Bomb = function (options)
 
     this.reset = function () 
     {
+        if (_showTimerId !== undefined) {
+            window.clearInterval(_showTimerId);
+            _showTimerId = undefined;
+        }
+
+        _bombsToCreate = Math.max(Math.round(_numCells * this.bombRatio), 1);
+        _cellsToShow = _numCells - _bombsToCreate;
+        _floodStack = [];
+        _showQueue = [];
+
         this.data.eachCell(function (cell) {
             cell.count = 0;
             cell.shown = false;
@@ -93,8 +103,6 @@ Game.Logic.Bomb = function (options)
                              "bomb-flagChoice",
                              "bomb-exploded");
         });
-        _floodStack = [];
-        _showQueue = [];
     };
 
 
@@ -415,13 +423,10 @@ Game.Logic.Bomb = function (options)
         _doShow.bind(this)(startingCell);
     }
 
-    this.onReady = function (Event) 
+    this.onReady = function (event) 
     {
         document.getElementById("hint").addEventListener("click", this.doHint.bind(this), false);
-        document.getElementById("reset3d").addEventListener("click", function (e) {
-            var cell = this.data.cell(this.topology.xPos, this.topology.yPos);
-            this.win(cell);
-        }.bind(this), false);
+        document.getElementById("newGame").addEventListener("click", this.reset.bind(this), false);
     }
 
     // ------------
@@ -433,10 +438,10 @@ Game.Logic.Bomb = function (options)
     var _yMax = this.ySize;
     var _showTimerId;
     var _showTimerDelay = 1;//Math.min(10, 5000 / _numCells);
-    var _bombsToCreate = Math.max(Math.round(_numCells * this.bombRatio), 1);
-    var _cellsToShow = _numCells - _bombsToCreate;
-    var _floodStack = [];
-    var _showQueue = [];
+    var _bombsToCreate;
+    var _cellsToShow;
+    var _floodStack;
+    var _showQueue;
     var _clickSound, _explodeSound, _successSound;
 
     // ----------------
